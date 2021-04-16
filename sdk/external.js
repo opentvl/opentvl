@@ -1,12 +1,14 @@
 const axios = require("axios");
 const _ = require("underscore");
 const utility = require("./util");
-const wait = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
+const wait = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 const term = require("terminal-kit").terminal;
 const Bottleneck = require("bottleneck");
 
+let progressBar;
+
 async function POST(endpoint, options) {
-  console.log("calling", endpoint, options);
+  //console.log("calling", endpoint, options);
 
   try {
     if (options && options.chunk && endpoint === "/util/getLogs") {
@@ -16,7 +18,7 @@ async function POST(endpoint, options) {
         let currToBlock = options.fromBlock + (i + 1) * options.chunk.length;
         currToBlock = currToBlock > options.toBlock ? options.toBlock : currToBlock;
         let opts = {
-          ...options
+          ...options,
         };
         opts.fromBlock = currFromBlock;
         opts.toBlock = currToBlock;
@@ -35,15 +37,17 @@ async function POST(endpoint, options) {
         progressBar = term.progressBar({
           width: 80,
           title: endpoint,
-          percent: true
+          percent: true,
         });
       }
 
+      // eslint-disable-next-line no-inner-declarations
       function processRequest(chunk) {
+        // eslint-disable-next-line no-async-promise-executor
         return new Promise(async (resolve, reject) => {
           try {
             let opts = {
-              ...options
+              ...options,
             };
             opts[options.chunk.param] = chunk;
 
@@ -71,11 +75,11 @@ async function POST(endpoint, options) {
       }
 
       const limiter = new Bottleneck({
-        maxConcurrent: options.adapterConcurrency || 1
+        maxConcurrent: options.adapterConcurrency || 1,
       });
 
       await Promise.all(
-        _.map(chunks, chunk => {
+        _.map(chunks, (chunk) => {
           return limiter.schedule(() => {
             return processRequest(chunk);
           });
@@ -93,7 +97,7 @@ async function POST(endpoint, options) {
 
       return {
         ethCallCount,
-        output
+        output,
       };
     } else {
       // retry for max 5 times

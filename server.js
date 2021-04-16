@@ -1,6 +1,5 @@
 const express = require("express");
 const { readdir } = require("fs").promises;
-const { join } = require("path");
 const { toSymbols } = require("./sdk/lib/address");
 
 const app = express();
@@ -9,7 +8,7 @@ const port = 7890;
 async function hasProject(project) {
   const projectNames = await readdir("projects");
 
-  return projectNames.some(name => name === project);
+  return projectNames.some((name) => name === project);
 }
 
 app.get("/projects/:project", async (req, res) => {
