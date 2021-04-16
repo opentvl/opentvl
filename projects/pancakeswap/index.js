@@ -25,7 +25,7 @@ async function tvl(_, block) {
     })
   ).output
 
-  //console.log("LOGS", logs.slice(0, 3))
+  console.log("NUM EXPECTED PAIRS", logs.length)
 
   const pairAddresses = logs
     // sometimes the full log is emitted
@@ -99,10 +99,7 @@ async function tvl(_, block) {
     })
   ).output
 
-  console.log(
-    'RESERVES',
-    reserves.filter(r => r.output['0'] !== '0').slice(0, 5)
-  )
+  console.log("RESERVES", reserves.length)
 
   const nums = reserves.reduce((accumulator, reserve, i) => {
     if (reserve.success) {
