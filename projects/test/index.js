@@ -11,41 +11,78 @@ const START_BLOCK = 6548398
 const FACTORY = '0xbcfccbde45ce874adcb698cc183debcf17952812'
 const CAKE = '0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82'
 
-/* For SDK Testing */
 async function tvl(_, block) {
-  console.log(
-    'bep20',
-    (await sdk.bsc.api.bep20.info(CAKE)).output,
-    (await sdk.bsc.api.bep20.symbol(CAKE)).output,
-    (await sdk.bsc.api.bep20.decimals(CAKE)).output,
-    (await sdk.bsc.api.bep20.totalSupply({ target: CAKE })).output,
-    (await sdk.bsc.api.bep20.balanceOf({ target: CAKE, owner: FACTORY })).output
-  )
+  console.log('sdk.bsc.bep20.info', (await sdk.bsc.api.bep20.info(CAKE)).output)
+
+  // console.log(
+  //   'sdk.bsc.bep20.symbol',
+  //   (await sdk.bsc.api.bep20.symbol(CAKE)).output
+  // )
+  // console.log(
+  //   'sdk.bsc.bep20.decimals',
+  //   (await sdk.bsc.api.bep20.decimals(CAKE)).output
+  // )
+  // console.log(
+  //   'sdk.bsc.bep20.totalSupply',
+  //   (await sdk.bsc.api.bep20.totalSupply({ target: CAKE })).output
+  // )
+  // console.log(
+  //   'sdk.bsc.bep20.balanceOf',
+  //   (await sdk.bsc.api.bep20.balanceOf({ target: CAKE, owner: FACTORY })).output
+  // )
+
+  // console.log(
+  //   'sdk.bsc.bnb.getBalance',
+  //   (await sdk.bsc.api.bnb.getBalance({ target: CAKE })).output
+  // )
+
+  // console.log(
+  //   'sdk.bsc.bnb.getBalances',
+  //   (await sdk.bsc.api.bnb.getBalances({ targets: [CAKE, FACTORY] })).output
+  // )
+
+  // console.log(
+  //   'sdk.bsc.util.getLogs',
+  //   (
+  //     await sdk.bsc.api.util.getLogs({
+  //       target: CAKE,
+  //       fromBlock: 6578300,
+  //       toBlock: 6578315,
+  //       topic: 'Transfer(from,to,value)'
+  //     })
+  //   ).output
+  // )
+
+  // console.log('sdk.bsc.util.tokenList', await sdk.bsc.api.util.tokenList())
+
+  // console.log(
+  //   'sdk.bsc.util.toSymbols',
+  //   (
+  //     await sdk.bsc.api.util.toSymbols({
+  //       CAKE: 123456
+  //     })
+  //   ).output
+  // )
 
   console.log(
-    'bnb',
-    (await sdk.bsc.api.bnb.getBalance({ target: CAKE })).output,
-    (await sdk.bsc.api.bnb.getBalances({ targets: [CAKE, FACTORY] })).output
+    'sdk.bsc.abi.call',
+    await sdk.bsc.api.abi.call({
+      target: CAKE,
+      abi: 'bep20:balanceOf',
+      params: [FACTORY]
+    })
   )
 
-  console.log(
-    'util',
-    (
-      await sdk.bsc.api.util.getLogs({
-        target: CAKE,
-        fromBlock: 6578300,
-        toBlock: 6578315,
-        topic: 'Transfer(from,to,value)'
-      })
-    ).output,
-    await sdk.bsc.api.util.tokenList(),
-    (
-      await sdk.bsc.api.util.toSymbols({
-        '0x2170ed0880ac9a755fd29b2688956bd959f933f8': 123456
-      })
-    ).output
-  )
-  /* For SDK Testing */
+  console.log('sdk.bsc.abi.multiCall', await sdk.bsc.api.abi.multiCall({
+    target: CAKE,
+    abi: 'bep20:balanceOf',
+    calls: [
+      { params: [FACTORY] },
+      { params: [CAKE] }
+    ]
+  }))
+
+  return null
 
   const supportedTokens = await sdk.bsc.api.util
     .tokenList()
