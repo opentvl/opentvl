@@ -1,6 +1,9 @@
 const utils = require("web3-utils");
+const _ = require("underscore");
+const { ethers } = require("ethers");
 const debug = require("debug")("web3");
 
+// eslint-disable-next-line no-unused-vars
 async function getBalance({ web3, limiter, target, block }) {
   debug("getBalance", target);
 
@@ -11,21 +14,22 @@ async function getBalance({ web3, limiter, target, block }) {
 
   return {
     callCount: 1,
-    output: balance
+    output: balance,
   };
 }
 
+// eslint-disable-next-line no-unused-vars
 async function getBalances({ web3, limiter, block, targets }) {
   debug("getBalances", targets);
 
   // ignore block since it requires archive nodes
   const rateLimitedGetBalance = limiter.wrap(web3.getBalance);
 
-  const balances = await Promise.all(targets.map(target => rateLimitedGetBalance(target)));
+  const balances = await Promise.all(targets.map((target) => rateLimitedGetBalance(target)));
 
   return {
     callCount: targets.length,
-    output: balances
+    output: balances,
   };
 }
 
@@ -52,12 +56,12 @@ async function getLogs({ web3, scan, limiter, target, topic, keys = [], fromBloc
   const rateLimitedGetPastLogs = limiter.wrap(web3.getPastLogs);
 
   const allLogRequests = await Promise.all(
-    blocks.map(async block => {
+    blocks.map(async (block) => {
       const logs = await rateLimitedGetPastLogs({
         fromBlock: block,
         toBlock: block,
         address: target,
-        topics: [utils.sha3(topic)]
+        topics: [utils.sha3(topic)],
       });
 
       debug("GetPastLogs for block", block);
@@ -75,7 +79,7 @@ async function getLogs({ web3, scan, limiter, target, topic, keys = [], fromBloc
   if (keys && keys.length > 0) {
     debug("return with keys", keys);
 
-    return allLogs.map(log => {
+    return allLogs.map((log) => {
       if (keys.length === 1) {
         return log[keys[0]];
       } else {
@@ -92,7 +96,7 @@ async function getLogs({ web3, scan, limiter, target, topic, keys = [], fromBloc
 
   return {
     callCount: allLogRequests.length,
-    output: allLogs
+    output: allLogs,
   };
 }
 
@@ -108,22 +112,11 @@ async function callOne(web3, abi, target, params) {
   //
   // the consequence is that we can only get accurate tvl at latest block id
 
-  try {
-    // debug("callOne", abi.name, target, params, result);
-    const result = await method(...(params || [])).call();
+  // debug("callOne", abi.name, target, params, result);
+  params = params !== undefined ? (Array.isArray(params) ? params : [params]) : [];
+  const result = await method(...params).call();
 
-    return {
-      input: { target, params },
-      success: true,
-      output: result
-    }
-  } catch(err) {
-    return {
-      input: { target, params },
-      success: false,
-      output: err
-    }
-  }
+  return result;
 }
 
 async function singleCall({ web3, limiter, target, abi, block, params }) {
@@ -136,14 +129,52 @@ async function singleCall({ web3, limiter, target, abi, block, params }) {
   return { callCount: 1, output: result };
 }
 
-async function multiCall({ web3, limiter, target, abi, block, calls }) {
+async function multiCall({ multiCallProvider, limiter, target, abi, block, calls }) {
   debug("multiCall", target, abi.name, block, calls);
 
-  const rateLimitedCallOne = limiter.wrap(callOne);
+  if (calls.length === 0) return [];
+  const templateContract = new ethers.Contract(calls[0]?.target ?? target ?? "", [abi], multiCallProvider);
+  const callChunks = _.chunk(calls, 400);
 
-  const results = await Promise.all(calls.map(arg => rateLimitedCallOne(web3, abi, arg.target, arg.params)));
+  const rateLimitedCallChunk = limiter.wrap(async (callChunk) => {
+    return await Promise.allSettled(
+      callChunk.map((call) => {
+        const contract = templateContract.attach(call.target ?? target ?? "");
+        const params = call.params !== undefined ? (Array.isArray(call.params) ? call.params : [call.params]) : [];
+        const resultPromise = contract[abi.name ?? ""](...params, {
+          blockTag: block,
+        });
+        return resultPromise;
+      })
+    );
+  });
 
-  return { callCount: calls.length, output: results };
+  const result = (await Promise.all(callChunks.map(async (callChunk) => await rateLimitedCallChunk(callChunk)))).flat();
+
+  if (result.filter((t) => t.status === "rejected").length === result.length) {
+    throw new Error("Decoding failed");
+  }
+  const mappedResults = calls.map((call, i) => {
+    let output;
+    if (result[i].status === "fulfilled") {
+      if (utils.isBigNumber(result[i].value)) {
+        output = result[i].value.toString();
+      } else {
+        output = result[i].value;
+      }
+    } else {
+      output = undefined;
+    }
+    return {
+      input: {
+        target: call.target ? call.target : target ? target : "",
+        params: call.params ? (Array.isArray(call.params) ? call.params : [call.params]) : [],
+      },
+      success: result[i].status === "fulfilled",
+      output: output,
+    };
+  });
+  return { callCount: Math.ceil(calls.length / 400), output: mappedResults };
 }
 
 module.exports = {
@@ -151,5 +182,5 @@ module.exports = {
   getBalances,
   getLogs,
   singleCall,
-  multiCall
+  multiCall,
 };

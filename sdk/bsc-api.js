@@ -6,6 +6,9 @@ const tokenList = require("./data/bscTokenLists.json");
 const { getBalance, getBalances, getLogs, singleCall, multiCall } = require("./lib/web3");
 const { toSymbols } = require("./lib/address");
 const debug = require("debug")("bsc-api");
+const { providers } = require("@0xsequence/multicall");
+const { providers: ethersProviders } = require("ethers");
+const BigNumber = require("bignumber.js");
 
 if (!process.env.BSC_RPC_URL) {
   throw new Error(`Please set environment variable BSC_RPC_URL`);
@@ -22,18 +25,53 @@ const BSC_WEB3 = new Eth(BSC_RPC_URL);
 const BSC_SCAN = new Etherscan(BSC_SCAN_KEY, "https://api.bscscan.com/api");
 const BSC_LIMITER = new Bottleneck({ maxConcurrent: 10, minTime: 50 });
 
+const multiCallProvider = new providers.MulticallProvider(
+  new ethersProviders.JsonRpcProvider(process.env.BSC_RPC_URL),
+  {
+    batchSize: 500,
+    verbose: false,
+    contract: "0xe7144e57d832c9005D252f415d205b4b8D78228e",
+  }
+);
+
+function getCachedFunction(abiString) {
+  let abi;
+  switch (abiString) {
+    case "bep20:symbol": {
+      abi = BEP20.filter((t) => t.name === "symbol")[0];
+      break;
+    }
+    case "bep20:decimals": {
+      abi = BEP20.filter((t) => t.name === "decimals")[0];
+      break;
+    }
+    case "bep20:balanceOf": {
+      abi = BEP20.filter((t) => t.name === "balanceOf")[0];
+      break;
+    }
+    case "bep20:totalSupply": {
+      abi = BEP20.filter((t) => t.name === "totalSupply")[0];
+      break;
+    }
+    default:
+      throw new Error("Unknown string ABI");
+  }
+  return abi;
+}
+
 async function bep20(method, target, params = []) {
-  const abi = BEP20.find(item => item.type === "function" && item.name === method);
+  const abi = BEP20.find((item) => item.type === "function" && item.name === method);
 
   return singleCall({
     web3: BSC_WEB3,
     limiter: BSC_LIMITER,
     target,
     abi,
-    params
+    params,
   });
 }
 
+// eslint-disable-next-line no-unused-vars
 async function cdp(endpoint, options) {
   return "TODO";
 }
@@ -41,19 +79,25 @@ async function cdp(endpoint, options) {
 module.exports = {
   abi: {
     call: ({ target, abi, block, params }) => {
+      if (typeof abi === "string") {
+        abi = getCachedFunction(abi);
+      }
       debug("bsc.api.abi.call", { target, abi, block, params });
 
       return singleCall({ web3: BSC_WEB3, limiter: BSC_LIMITER, target, abi, block, params });
     },
     multiCall: ({ target, abi, block, calls }) => {
+      if (typeof abi === "string") {
+        abi = getCachedFunction(abi);
+      }
       debug("bsc.api.abi.multiCall", { target, abi, block, calls });
 
-      return multiCall({ web3: BSC_WEB3, limiter: BSC_LIMITER, target, abi, block, calls });
-    }
+      return multiCall({ multiCallProvider: multiCallProvider, limiter: BSC_LIMITER, target, abi, block, calls });
+    },
   },
   cdp: {
-    getAssetsLocked: options =>
-      cdp("getAssetsLocked", { ...options, chunk: { param: "targets", length: 1000, combine: "balances" } })
+    getAssetsLocked: (options) =>
+      cdp("getAssetsLocked", { ...options, chunk: { param: "targets", length: 1000, combine: "balances" } }),
   },
   util: {
     getLogs: ({ target, topic, keys, fromBlock, toBlock }) => {
@@ -67,7 +111,7 @@ module.exports = {
         topic,
         keys,
         fromBlock,
-        toBlock
+        toBlock,
       });
     },
     tokenList: () => {
@@ -75,55 +119,53 @@ module.exports = {
 
       return Promise.resolve(tokenList);
     },
-    toSymbols: addressesBalances => {
+    toSymbols: (addressesBalances) => {
       debug("bsc.api.util.toSymbols", addressesBalances);
 
       return Promise.resolve({
         callCount: 0,
-        output: toSymbols(addressesBalances)
+        output: toSymbols(addressesBalances),
       });
-    }
+    },
   },
   bnb: {
     getBalance: async ({ target, block, decimals }) => {
       debug("bsc.api.bnb.getBalance", { target, block, decimals });
 
-      const { callCount, output } = await getBalance({
+      let { callCount, output } = await getBalance({
         web3: BSC_WEB3,
         limiter: BSC_LIMITER,
         target,
-        block
+        block,
       });
 
-      const balance = parseInt(output, 10);
-
       if (decimals) {
-        return { callCount, output: balance / 10 ** decimals };
+        output = new BigNumber(output).dividedBy(new BigNumber(10).exponentiatedBy(new BigNumber(decimals))).toString();
       }
 
-      return { callCount, output: balance };
+      return { callCount, output };
     },
     getBalances: async ({ targets, block, decimals }) => {
       debug("bsc.api.bnb.getBalances", { targets, block, decimals });
 
-      const { callCount, output } = await getBalances({
+      let { callCount, output } = await getBalances({
         web3: BSC_WEB3,
         limiter: BSC_LIMITER,
         targets,
-        block
+        block,
       });
 
-      const balances = output.map(o => parseInt(o, 10));
-
       if (decimals) {
-        return { callCount, output: balances.map(b => b / 10 ** decimals) };
+        output = output.map((o) =>
+          new BigNumber(o).dividedBy(new BigNumber(10).exponentiatedBy(new BigNumber(decimals))).toString()
+        );
       }
 
-      return { callCount, output: balances };
-    }
+      return { callCount, output };
+    },
   },
   bep20: {
-    info: async target => {
+    info: async (target) => {
       debug("bsc.api.bep20.info", { target });
 
       const { callCount: symbolCallCount, output: symbol } = await bep20("symbol", target);
@@ -133,52 +175,45 @@ module.exports = {
         callCount: symbolCallCount + decimalsCallCount,
         output: {
           symbol,
-          decimals
-        }
+          decimals: parseInt(decimals),
+        },
       };
     },
-    symbol: target => {
+    symbol: (target) => {
       debug("bsc.api.bep20.symbol", { target });
 
       return bep20("symbol", target);
     },
-    decimals: target => {
+    decimals: async (target) => {
       debug("bsc.api.bep20.decimals", { target });
 
-      return bep20("decimals", target);
+      const { callCount: decimalsCallCount, output: decimals } = await bep20("decimals", target);
+      return {
+        callCount: decimalsCallCount,
+        output: parseInt(decimals),
+      };
     },
     totalSupply: async ({ target, block, decimals }) => {
       debug("bsc.api.bep20.totalSupply", { target, block, decimals });
 
-      const { callCount, output } = await bep20("totalSupply", target);
-
-      const totalSupply = parseInt(output, 10);
-
-      // ignore block for now
+      let { callCount, output } = await bep20("totalSupply", target);
 
       if (decimals) {
-        return {
-          callCount,
-          output: totalSupply / 10 ** decimals
-        };
+        output = new BigNumber(output).dividedBy(new BigNumber(10).exponentiatedBy(new BigNumber(decimals))).toString();
       }
 
-      return { callCount, output: totalSupply };
+      return { callCount, output };
     },
     balanceOf: async ({ target, owner, block, decimals }) => {
       debug("bsc.api.bep20.balanceOf", { target, owner, block, decimals });
 
-      const { callCount, output } = await bep20("balanceOf", target, [owner]);
-
-      const balance = parseInt(output, 10);
-
-      // ignore block for now
+      let { callCount, output } = await bep20("balanceOf", target, [owner]);
 
       if (decimals) {
-        return { callCount, output: balance / 10 ** decimals };
+        output = new BigNumber(output).dividedBy(new BigNumber(10).exponentiatedBy(new BigNumber(decimals))).toString();
       }
 
-      return { callCount, output: balance };
-    }
-  }
+      return { callCount, output };
+    },
+  },
 };

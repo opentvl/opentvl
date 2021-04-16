@@ -1,36 +1,46 @@
-const BSC_TOKENS = require("../data/bscTokenLists.json");
-const ETH_TOKENS = require("../data/ethTokenLists.json");
+const { multiCall } = require("./web3");
+const BigNumber = require("bignumber.js");
 
-function mapAddressToTokenSymbol(tokenList, address) {
-  const token = tokenList.find(t => t.contract.toLowerCase() === address.toLowerCase());
-
-  return token && token.symbol;
-}
-
-function getDecimals(tokenList, address) {
-  const token = tokenList.find(t => t.contract.toLowerCase() === address.toLowerCase());
-
-  return token && parseInt(token.decimals);
-}
-
-function toSymbols(output) {
-  const result = {};
-
-  Object.keys(output).forEach(address => {
-    const symbol =
-      mapAddressToTokenSymbol(BSC_TOKENS, address) || mapAddressToTokenSymbol(ETH_TOKENS, address) || address;
-
-    const decimals = getDecimals(BSC_TOKENS, address) || getDecimals(ETH_TOKENS, address) || 0;
-    const numTokens = output[address] / (10 ** decimals)
-
-    if (result[symbol]) {
-      result[symbol] += numTokens;
-    } else {
-      result[symbol] = numTokens;
+async function toSymbols(addresses) {
+  const queryAddresses = Object.keys(addresses).filter((t) => t !== "0x0000000000000000000000000000000000000000");
+  const symbols = (
+    await multiCall({
+      abi: "erc20:symbol",
+      calls: queryAddresses.map((t) => {
+        return { target: t };
+      }),
+    })
+  ).reduce(
+    (m, t) => {
+      m[t.input.target] = t.output;
+      return m;
+    },
+    {
+      "0x0000000000000000000000000000000000000000": "BNB",
     }
-  });
+  );
+  const decimals = (
+    await multiCall(
+      "erc20:decimals",
+      queryAddresses.map((t) => {
+        return { target: t };
+      })
+    )
+  ).reduce(
+    (m, t) => {
+      m[t.input.target] = t.output;
+      return m;
+    },
+    { "0x0000000000000000000000000000000000000000": 18 }
+  );
 
+  const result = Object.keys(addresses).reduce((m, t) => {
+    m[symbols[t]] = new BigNumber(addresses[t])
+      .dividedBy(new BigNumber(10).exponentiatedBy(new BigNumber(decimals[t])))
+      .toString();
+    return m;
+  }, {});
   return result;
 }
 
-module.exports = { mapAddressToTokenSymbol, toSymbols };
+module.exports = { toSymbols };
