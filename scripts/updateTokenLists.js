@@ -1,12 +1,13 @@
 const sdk = require('../sdk');
 const fs = require('fs');
 
-const BSC_TOKENS = require("./data/bscTokenLists.json");
-const ETH_TOKENS = require("./data/ethTokenLists.json");
+const BSC_TOKENS = require("../sdk/data/bscTokenLists.json");
+const ETH_TOKENS = require("../sdk/data/ethTokenLists.json");
+const NEW_ADDRESSES = require("../data/bscContractAddresses.json");
 
-async function getDecimals() {
+async function updateTokenLists() {
   const bscDecimals = await Promise.all(
-    BSC_TOKENS.map(({ contract }) => sdk.bsc.api.bep20.decimals(contract))
+    BSC_TOKENS.map(({ contract }) => sdk.bsc.bep20.decimals(contract))
   )
 
   const bscTokensWithDecimals = BSC_TOKENS.map(({ symbol, contract }, i) => ({
@@ -18,4 +19,4 @@ async function getDecimals() {
   fs.writeFileSync('./data/bscTokenLists.json', JSON.stringify(bscTokensWithDecimals, null, 2))
 }
 
-getDecimals();
+updateTokenLists();

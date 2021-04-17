@@ -68,7 +68,7 @@ async function abiCall({ target, abi, block, params }) {
   if (typeof abi === "string") {
     abi = mapStringToABI(abi);
   }
-  debug("bsc.api.abi.call", { target, abi, block, params });
+  debug("bsc.api.call", { target, abi, block, params });
 
   return singleCall({ web3: BSC_WEB3, limiter: BSC_LIMITER, target, abi, block, params });
 }
@@ -77,7 +77,7 @@ async function abiMultiCall({ target, abi, block, calls }) {
   if (typeof abi === "string") {
     abi = mapStringToABI(abi);
   }
-  debug("bsc.api.abi.multiCall", { target, abi, block, calls });
+  debug("bsc.api.multiCall", { target, abi, block, calls });
 
   return multiCall({
     web3: BSC_WEB3,
