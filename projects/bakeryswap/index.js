@@ -137,14 +137,13 @@ async function tvl(_, block) {
     return accumulator
   }, {})
 
-
-
-  return reserveBalances
+  return (await sdk.bsc.util.toSymbols(reserveBalances)).output
 }
 
 module.exports = {
-  name: 'Pancakeswap',
-  token: 'CAKE',
+  version: '2', // to distinguish new version from old version
+  name: 'BakerySwap',
+  token: 'BAKE',
   category: 'dexes',
   start: 1541116800, // 11/02/2018 @ 12:00am (UTC)
   tvl

@@ -206,7 +206,7 @@ async function tvl(_, block) {
 }
 
 module.exports = {
-  version: '2',
+  version: '2', // to distinguish old version from new version
   name: 'Test',
   token: 'TEST',
   category: 'dexes',

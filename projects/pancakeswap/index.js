@@ -1,14 +1,14 @@
 const BigNumber = require('bignumber.js')
 
-const sdk = require('../../sdk');
-const token0 = require('./abis/token0.json');
-const token1 = require('./abis/token1.json');
-const getReserves = require('./abis/getReserves.json');
+const sdk = require('../../sdk')
+const token0 = require('./abis/token0.json')
+const token1 = require('./abis/token1.json')
+const getReserves = require('./abis/getReserves.json')
 
-const fetch = require("node-fetch");
+const fetch = require('node-fetch')
 
-const START_BLOCK = 586851;
-const FACTORY = '0xbcfccbde45ce874adcb698cc183debcf17952812';
+const START_BLOCK = 586851
+const FACTORY = '0xbcfccbde45ce874adcb698cc183debcf17952812'
 
 /*async function getPairAddresses() {
   const logs = (
@@ -36,21 +36,22 @@ const FACTORY = '0xbcfccbde45ce874adcb698cc183debcf17952812';
 
 async function fetchPairAddresses() {
   const result = await (
-    await fetch("https://api.pancakeswap.finance/api/v1/stat")
-  ).json();
+    await fetch('https://api.pancakeswap.finance/api/v1/stat')
+  ).json()
 
-  const pairAddresses = result.trade_pairs
-    .map(({ swap_pair_contract }) => swap_pair_contract.toLowerCase())
+  const pairAddresses = result.trade_pairs.map(({ swap_pair_contract }) =>
+    swap_pair_contract.toLowerCase()
+  )
 
-  return pairAddresses;
+  return pairAddresses
 }
 
 async function tvl(_, block) {
   const supportedTokens = await sdk.bsc.util
     .tokenList()
-    .then(supportedTokens => supportedTokens.map(({ contract }) => contract));
+    .then(supportedTokens => supportedTokens.map(({ contract }) => contract))
 
-  const pairAddresses = await fetchPairAddresses();
+  const pairAddresses = await fetchPairAddresses()
 
   const [token0Addresses, token1Addresses] = await Promise.all([
     sdk.bsc.abi
@@ -150,12 +151,12 @@ async function tvl(_, block) {
     return accumulator
   }, {})
 
-  return reserveBalances
+  return (await sdk.bsc.util.toSymbols(reserveBalances)).output
 }
 
 module.exports = {
-  version: '2', // to distinguish old version from new version
-  name: 'Pancakeswap',
+  version: '2', // to distinguish new version from old version
+  name: 'PancakeSwap',
   token: 'CAKE',
   category: 'dexes',
   start: 1541116800, // 11/02/2018 @ 12:00am (UTC)
