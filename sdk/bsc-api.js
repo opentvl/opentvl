@@ -68,7 +68,7 @@ async function abiCall({ target, abi, block, params }) {
   if (typeof abi === "string") {
     abi = mapStringToABI(abi);
   }
-  debug("bsc.api.call", { target, abi, block, params });
+  debug("bsc.abi.call", { target, abi, block, params });
 
   return singleCall({ web3: BSC_WEB3, limiter: BSC_LIMITER, target, abi, block, params });
 }
@@ -77,7 +77,7 @@ async function abiMultiCall({ target, abi, block, calls }) {
   if (typeof abi === "string") {
     abi = mapStringToABI(abi);
   }
-  debug("bsc.api.multiCall", { target, abi, block, calls });
+  debug("bsc.abi.multiCall", { target, abi, block, calls });
 
   return multiCall({
     web3: BSC_WEB3,
@@ -91,7 +91,7 @@ async function abiMultiCall({ target, abi, block, calls }) {
 }
 
 async function utilGetLogs({ target, topic, keys, fromBlock, toBlock }) {
-  debug("bsc.api.util.getLogs", { target, topic, fromBlock, toBlock });
+  debug("bsc.util.getLogs", { target, topic, fromBlock, toBlock });
 
   return getLogs({
     web3: BSC_WEB3,
@@ -106,13 +106,13 @@ async function utilGetLogs({ target, topic, keys, fromBlock, toBlock }) {
 }
 
 async function utilTokenList() {
-  debug("bsc.api.util.tokenList");
+  debug("bsc.util.tokenList");
 
   return tokenList;
 }
 
 async function utilToSymbols(addressesBalances) {
-  debug("bsc.api.util.toSymbols", addressesBalances);
+  debug("bsc.util.toSymbols", addressesBalances);
 
   const normalAddresses = Object.keys(addressesBalances).filter(addr => addr !== NATIVE_TOKEN_ADDRESS);
 
@@ -161,7 +161,7 @@ async function utilToSymbols(addressesBalances) {
 }
 
 async function bnbGetBalance({ target, block, decimals }) {
-  debug("bsc.api.bnb.getBalance", { target, block, decimals });
+  debug("bsc.bnb.getBalance", { target, block, decimals });
 
   let { callCount, output } = await getBalance({
     web3: BSC_WEB3,
@@ -178,7 +178,7 @@ async function bnbGetBalance({ target, block, decimals }) {
 }
 
 async function bnbGetBalances({ targets, block, decimals }) {
-  debug("bsc.api.bnb.getBalances", { targets, block, decimals });
+  debug("bsc.bnb.getBalances", { targets, block, decimals });
 
   let { callCount, output } = await getBalances({
     web3: BSC_WEB3,
@@ -195,7 +195,7 @@ async function bnbGetBalances({ targets, block, decimals }) {
 }
 
 async function bep20Info(target) {
-  debug("bsc.api.bep20.info", { target });
+  debug("bsc.bep20.info", { target });
 
   const { callCount: symbolCallCount, output: symbol } = await bep20("symbol", target);
   const { callCount: decimalsCallCount, output: decimals } = await bep20("decimals", target);
@@ -210,13 +210,13 @@ async function bep20Info(target) {
 }
 
 async function bep20Symbol(target) {
-  debug("bsc.api.bep20.symbol", { target });
+  debug("bsc.bep20.symbol", { target });
 
   return bep20("symbol", target);
 }
 
 async function bep20Decimals(target) {
-  debug("bsc.api.bep20.decimals", { target });
+  debug("bsc.bep20.decimals", { target });
 
   const { callCount: decimalsCallCount, output: decimals } = await bep20("decimals", target);
   return {
@@ -226,7 +226,7 @@ async function bep20Decimals(target) {
 }
 
 async function bep20TotalSupply({ target, block, decimals }) {
-  debug("bsc.api.bep20.totalSupply", { target, block, decimals });
+  debug("bsc.bep20.totalSupply", { target, block, decimals });
 
   let { callCount, output } = await bep20("totalSupply", target);
 
@@ -238,7 +238,7 @@ async function bep20TotalSupply({ target, block, decimals }) {
 }
 
 async function bep20BalanceOf({ target, owner, block, decimals }) {
-  debug("bsc.api.bep20.balanceOf", { target, owner, block, decimals });
+  debug("bsc.bep20.balanceOf", { target, owner, block, decimals });
 
   let { callCount, output } = await bep20("balanceOf", target, [owner]);
 

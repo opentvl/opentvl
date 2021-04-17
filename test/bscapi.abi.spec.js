@@ -22,7 +22,7 @@ describe("abi", () => {
       type: "function",
     };
 
-    const result = await bsc.api.abi.call({
+    const result = await bsc.abi.call({
       target: "0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82",
       abi: balanceOfABI,
       params: "0x73feaa1ee314f8c655e354234017be2193c9e24e",
@@ -50,12 +50,12 @@ describe("abi", () => {
       },
     };
 
-    const result = await bsc.api.abi.call({ target: input.target, abi: input.abi });
+    const result = await bsc.abi.call({ target: input.target, abi: input.abi });
     expect(result.output).toBe("18");
   });
 
   test("call with cached abi", async () => {
-    const result = await bsc.api.abi.call({
+    const result = await bsc.abi.call({
       target: "0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82",
       abi: "bep20:decimals",
     });
@@ -67,7 +67,7 @@ describe("abi", () => {
       { target: "0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82" },
       { target: "0xa8c2b8eec3d368c0253ad3dae65a5f2bbb89c929" },
     ];
-    const result = await bsc.api.abi.multiCall({ abi: "bep20:decimals", calls: calls });
+    const result = await bsc.abi.multiCall({ abi: "bep20:decimals", calls: calls });
     expect(result).toMatchSnapshot();
   });
 
@@ -82,9 +82,9 @@ describe("abi", () => {
         { target: "0xa8c2b8eec3d368c0253ad3dae65a5f2bbb89c929" },
       ],
     };
-    const symbolResult = await bsc.api.abi.multiCall({ abi: "bep20:symbol", calls: input.calls });
+    const symbolResult = await bsc.abi.multiCall({ abi: "bep20:symbol", calls: input.calls });
     expect(symbolResult).toMatchSnapshot();
-    const decimalsResult = await bsc.api.abi.multiCall({ abi: "bep20:decimals", calls: input.calls });
+    const decimalsResult = await bsc.abi.multiCall({ abi: "bep20:decimals", calls: input.calls });
     expect(decimalsResult).toMatchSnapshot();
   });
 });
