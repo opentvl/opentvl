@@ -2,9 +2,9 @@ const utils = require("web3-utils");
 const _ = require("underscore");
 const debug = require("debug")("open-tvl:web3");
 const MULTICALL = require("../abis/multicall.json");
+const MULTICALL_CHUNK_SIZE = 400;
 
-// eslint-disable-next-line no-unused-vars
-async function getBalance({ web3, limiter, target, block }) {
+async function getBalance({ web3, limiter, target }) {
   debug("getBalance", target);
 
   // ignore block since it requires archive nodes
@@ -18,8 +18,7 @@ async function getBalance({ web3, limiter, target, block }) {
   };
 }
 
-// eslint-disable-next-line no-unused-vars
-async function getBalances({ web3, limiter, block, targets }) {
+async function getBalances({ web3, limiter, targets }) {
   debug("getBalances", targets);
 
   // ignore block since it requires archive nodes
@@ -140,71 +139,49 @@ async function singleCall({ web3, limiter, target, abi, block, params }) {
   return { callCount: 1, output: result };
 }
 
-// async function multiCall({ web3, limiter, target, abi, block, calls }) {
-//   debug("multiCall", target, abi.name, block, calls);
-
-//   const rateLimitedCallOne = limiter.wrap(callOne);
-
-//   const results = await Promise.all(calls.map(arg => rateLimitedCallOne(web3, abi, arg.target, arg.params)));
-
-//   return { callCount: calls.length, output: results };
-// }
-
 async function multiCall({ web3, multiCallProvider, limiter, target, abi, block, calls }) {
   debug("multiCall", target, abi.name, block, calls);
 
   if (calls.length === 0) return { callCount: 0, output: [] };
 
-  const callChunks = _.chunk(calls, 400);
-
-  Promise.all(callChunks.map(chunk => {}));
-
   const multiCallContract = new web3.Contract(MULTICALL, multiCallProvider);
 
   const rateLimitedCallChunk = limiter.wrap(async callChunk => {
-    multiCallContract.methods
-      .multiCall(
-        callChunk.map(call => ({
-          delegateCall: false,
-          revertOnError: true,
-          gasLimit: 1000000000,
-          target: call.target || target,
-          value: 0,
-          data: web3.abi.encodeFunctionCall(abi, normalizeCallParams(call.params))
-        }))
-      )
-      .call();
+    const txs = callChunk.map(call => ({
+      delegateCall: false,
+      revertOnError: true,
+      gasLimit: 0,
+      target: call.target || target,
+      value: 0,
+      data: web3.abi.encodeFunctionCall(abi, normalizeCallParams(call.params))
+    }));
+
+    const response = await multiCallContract.methods.multiCall(txs).call();
+
+    return response._results.map((res, idx) => {
+      const callResult = web3.abi.decodeParameters(abi.outputs, res);
+
+      return {
+        input: {
+          target: callChunk[idx].target || target,
+          params: normalizeCallParams(callChunk[idx].params)
+        },
+        success: response._successes[idx],
+        // according to SDK doc, if there's only one, return result directly
+        output: abi.outputs.length === 1 ? callResult[0] : callResult
+      };
+    });
   });
 
-  const result = (await Promise.all(callChunks.map(async callChunk => await rateLimitedCallChunk(callChunk)))).flat();
+  const callChunks = _.chunk(calls, MULTICALL_CHUNK_SIZE);
 
-  console.log("multicall result", result);
+  const responses = (
+    await Promise.all(callChunks.map(async callChunk => await rateLimitedCallChunk(callChunk)))
+  ).flat();
 
-  if (result.filter(t => t.status === "rejected").length === result.length) {
-    throw new Error("Decoding failed");
-  }
+  // debug("Multicall Result", responses);
 
-  const mappedResults = calls.map((call, i) => {
-    let output;
-    if (result[i].status === "fulfilled") {
-      if (utils.isBigNumber(result[i].value)) {
-        output = result[i].value.toString();
-      } else {
-        output = result[i].value;
-      }
-    } else {
-      output = undefined;
-    }
-    return {
-      input: {
-        target: call.target ? call.target : target ? target : "",
-        params: call.params ? (Array.isArray(call.params) ? call.params : [call.params]) : []
-      },
-      success: result[i].status === "fulfilled",
-      output: output
-    };
-  });
-  return { callCount: Math.ceil(calls.length / 400), output: mappedResults };
+  return { callCount: callChunks.length, output: responses };
 }
 
 module.exports = {

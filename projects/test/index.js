@@ -12,86 +12,84 @@ const FACTORY = '0xbcfccbde45ce874adcb698cc183debcf17952812'
 const CAKE = '0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82'
 
 async function tvl(_, block) {
-  console.log('sdk.bsc.bep20.info', (await sdk.bsc.api.bep20.info(CAKE)).output)
+  console.log('sdk.bsc.bep20.info', (await sdk.bsc.bep20.info(CAKE)).output)
 
-  // console.log(
-  //   'sdk.bsc.bep20.symbol',
-  //   (await sdk.bsc.api.bep20.symbol(CAKE)).output
-  // )
-  // console.log(
-  //   'sdk.bsc.bep20.decimals',
-  //   (await sdk.bsc.api.bep20.decimals(CAKE)).output
-  // )
-  // console.log(
-  //   'sdk.bsc.bep20.totalSupply',
-  //   (await sdk.bsc.api.bep20.totalSupply({ target: CAKE })).output
-  // )
-  // console.log(
-  //   'sdk.bsc.bep20.balanceOf',
-  //   (await sdk.bsc.api.bep20.balanceOf({ target: CAKE, owner: FACTORY })).output
-  // )
+  console.log('sdk.bsc.bep20.symbol', (await sdk.bsc.bep20.symbol(CAKE)).output)
 
-  // console.log(
-  //   'sdk.bsc.bnb.getBalance',
-  //   (await sdk.bsc.api.bnb.getBalance({ target: CAKE })).output
-  // )
+  console.log(
+    'sdk.bsc.bep20.decimals',
+    (await sdk.bsc.bep20.decimals(CAKE)).output
+  )
 
-  // console.log(
-  //   'sdk.bsc.bnb.getBalances',
-  //   (await sdk.bsc.api.bnb.getBalances({ targets: [CAKE, FACTORY] })).output
-  // )
+  console.log(
+    'sdk.bsc.bep20.totalSupply',
+    (await sdk.bsc.bep20.totalSupply({ target: CAKE })).output
+  )
 
-  // console.log(
-  //   'sdk.bsc.util.getLogs',
-  //   (
-  //     await sdk.bsc.api.util.getLogs({
-  //       target: CAKE,
-  //       fromBlock: 6578300,
-  //       toBlock: 6578315,
-  //       topic: 'Transfer(from,to,value)'
-  //     })
-  //   ).output
-  // )
+  console.log(
+    'sdk.bsc.bep20.balanceOf',
+    (await sdk.bsc.bep20.balanceOf({ target: CAKE, owner: FACTORY })).output
+  )
 
-  // console.log('sdk.bsc.util.tokenList', await sdk.bsc.api.util.tokenList())
+  console.log(
+    'sdk.bsc.bnb.getBalance',
+    (await sdk.bsc.bnb.getBalance({ target: CAKE })).output
+  )
 
-  // console.log(
-  //   'sdk.bsc.util.toSymbols',
-  //   (
-  //     await sdk.bsc.api.util.toSymbols({
-  //       CAKE: 123456
-  //     })
-  //   ).output
-  // )
+  console.log(
+    'sdk.bsc.bnb.getBalances',
+    (await sdk.bsc.bnb.getBalances({ targets: [CAKE, FACTORY] })).output
+  )
+
+  console.log(
+    'sdk.bsc.util.getLogs',
+    (
+      await sdk.bsc.util.getLogs({
+        target: CAKE,
+        fromBlock: 6578300,
+        toBlock: 6578315,
+        topic: 'Transfer(from,to,value)'
+      })
+    ).output
+  )
+
+  console.log('sdk.bsc.util.tokenList', await sdk.bsc.util.tokenList())
+
+  console.log(
+    'sdk.bsc.util.toSymbols',
+    (
+      await sdk.bsc.util.toSymbols({
+        [CAKE]: 123456
+      })
+    ).output
+  )
 
   console.log(
     'sdk.bsc.abi.call',
-    await sdk.bsc.api.abi.call({
+    await sdk.bsc.abi.call({
       target: CAKE,
       abi: 'bep20:balanceOf',
       params: [FACTORY]
     })
   )
 
-  console.log('sdk.bsc.abi.multiCall', await sdk.bsc.api.abi.multiCall({
-    target: CAKE,
-    abi: 'bep20:balanceOf',
-    calls: [
-      { params: [FACTORY] },
-      { params: [CAKE] }
-    ]
-  }))
+  console.log(
+    'sdk.bsc.abi.multiCall',
+    await sdk.bsc.abi.multiCall({
+      target: CAKE,
+      abi: 'bep20:balanceOf',
+      calls: [{ params: [FACTORY] }, { params: [CAKE] }]
+    })
+  )
 
-  return null
-
-  const supportedTokens = await sdk.bsc.api.util
+  const supportedTokens = await sdk.bsc.util
     .tokenList()
     .then(supportedTokens => supportedTokens.map(({ contract }) => contract))
 
   const logs = (
-    await sdk.bsc.api.util.getLogs({
+    await sdk.bsc.util.getLogs({
       keys: [],
-      toBlock: block,
+      toBlock: block.bsc,
       target: FACTORY,
       fromBlock: START_BLOCK,
       topic: 'PairCreated(address,address,address,uint256)'
@@ -107,27 +105,25 @@ async function tvl(_, block) {
     .map(pairAddress => pairAddress.toLowerCase())
 
   const [token0Addresses, token1Addresses] = await Promise.all([
-    sdk.bsc.api.abi
+    sdk.bsc.abi
       .multiCall({
         abi: token0,
         calls: pairAddresses.map(pairAddress => ({
           target: pairAddress
         })),
-        block
+        block: block.bsc
       })
       .then(({ output }) => output),
-    sdk.bsc.api.abi
+    sdk.bsc.abi
       .multiCall({
         abi: token1,
         calls: pairAddresses.map(pairAddress => ({
           target: pairAddress
         })),
-        block
+        block: block.bsc
       })
       .then(({ output }) => output)
   ])
-
-  console.log('got addrs', token0Addresses, token1Addresses)
 
   const pairs = {}
   // add token0Addresses
@@ -159,16 +155,16 @@ async function tvl(_, block) {
   })
 
   const reserves = (
-    await sdk.bsc.api.abi.multiCall({
+    await sdk.bsc.abi.multiCall({
       abi: getReserves,
       calls: Object.keys(pairs).map(pairAddress => ({
         target: pairAddress
       })),
-      block
+      block: block.bsc
     })
   ).output
 
-  return reserves.reduce((accumulator, reserve, i) => {
+  const nums = reserves.reduce((accumulator, reserve, i) => {
     if (reserve.success) {
       const pairAddress = reserve.input.target.toLowerCase()
       const pair = pairs[pairAddress] || {}
@@ -205,9 +201,12 @@ async function tvl(_, block) {
 
     return accumulator
   }, {})
+
+  return (await sdk.bsc.util.toSymbols(nums)).output
 }
 
 module.exports = {
+  version: '2',
   name: 'Test',
   token: 'TEST',
   category: 'dexes',

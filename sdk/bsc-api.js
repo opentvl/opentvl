@@ -116,47 +116,46 @@ async function utilToSymbols(addressesBalances) {
 
   const normalAddresses = Object.keys(addressesBalances).filter(addr => addr !== NATIVE_TOKEN_ADDRESS);
 
-  const symbolsByAddresses = (
-    await abiMultiCall({
-      abi: "bep20:symbol",
-      calls: normalAddresses.map(t => {
-        return { target: t };
-      })
+  const symbolsRequests = await abiMultiCall({
+    abi: "bep20:symbol",
+    calls: normalAddresses.map(t => {
+      return { target: t };
     })
-  ).reduce(
+  });
+  const symbolsByAddresses = symbolsRequests.output.reduce(
     (acc, t) => {
       acc[t.input.target] = t.output;
       return acc;
     },
     {
-      NATIVE_TOKEN_ADDRESS: NATIVE_TOKEN_SYMBOL
+      [NATIVE_TOKEN_ADDRESS]: NATIVE_TOKEN_SYMBOL
     }
   );
 
-  const decimalsByAddresses = (
-    await abiMultiCall({
-      abi: "bep:decimals",
-      calls: normalAddresses.map(t => {
-        return { target: t };
-      })
+  const decimalsRequests = await abiMultiCall({
+    abi: "bep20:decimals",
+    calls: normalAddresses.map(t => {
+      return { target: t };
     })
-  ).reduce(
+  });
+  const decimalsByAddresses = decimalsRequests.output.reduce(
     (acc, t) => {
       acc[t.input.target] = t.output;
       return acc;
     },
     {
-      NATIVE_TOKEN_ADDRESS: NATIVE_TOKEN_DECIMALS
+      [NATIVE_TOKEN_ADDRESS]: NATIVE_TOKEN_DECIMALS
     }
   );
 
   const output = Object.keys(addressesBalances).reduce((acc, addr) => {
-    acc[symbolsByAddresses[addr]] = applyDecimals(addresses[addr], decimalsByAddresses[addr]);
+    acc[symbolsByAddresses[addr]] = applyDecimals(addressesBalances[addr], decimalsByAddresses[addr]);
+
     return acc;
   }, {});
 
   return {
-    callCount: 0,
+    callCount: symbolsRequests.callCount + decimalsRequests.callCount,
     output
   };
 }

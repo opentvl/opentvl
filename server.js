@@ -1,9 +1,21 @@
+const Eth = require("web3-eth");
 const express = require("express");
 const { readdir } = require("fs").promises;
 const sdk = require("./sdk");
 
 const app = express();
 const port = 7890;
+
+if (!process.env.BSC_RPC_URL) {
+  throw new Error(`Please set environment variable BSC_RPC_URL`);
+}
+
+if (!process.env.ETH_RPC_URL) {
+  throw new Error(`Please set environment variable ETH_RPC_URL`);
+}
+
+const BSC_WEB3 = new Eth(process.env.BSC_RPC_URL);
+const ETH_WEB3 = new Eth(process.env.ETH_RPC_URL);
 
 async function hasProject(project) {
   const projectNames = await readdir("projects");
@@ -21,15 +33,34 @@ app.get("/projects/:project", async (req, res) => {
       return;
     }
 
-    const { tvl } = require(`./projects/${project}/index.js`);
+    const { tvl, version } = require(`./projects/${project}/index.js`);
 
-    const output = await tvl(0, 9999999999);
+    const ethBlock = await ETH_WEB3.getBlockNumber();
+    const bscBlock = await BSC_WEB3.getBlockNumber();
 
-    const outputWithSymbolKeys = await sdk.bsc.api.util.toSymbols(output);
+    let block = {
+      eth: ethBlock,
+      bsc: bscBlock
+    };
 
-    console.log("Final Result", output, outputWithSymbolKeys);
+    if (!version) {
+      // to keep compatibility with old adapters
+      // we introduced a version field
+      // new adapters should expect block to be an object of { eth, bsc }
+      block = ethBlock;
+    }
 
-    res.json(JSON.stringify(outputWithSymbolKeys));
+    let output = await tvl(0, block);
+
+    if (!version) {
+      // to keep compatibility with old adapters
+      // new adapters should handle toSymbols inside the adapters themselves
+      output = await sdk.eth.util.toSymbols(output);
+    }
+
+    console.log("Final Result", output);
+
+    res.json(JSON.stringify(output));
   } catch (err) {
     console.log("project processing error", err);
 

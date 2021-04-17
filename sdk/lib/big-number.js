@@ -1,7 +1,9 @@
 const BigNumber = require("bignumber.js");
 
 function applyDecimals(bigNumber, decimals) {
-  return new BigNumber(output).dividedBy(new BigNumber(10).exponentiatedBy(new BigNumber(decimals))).toString();
+  const dividend = new BigNumber(10).exponentiatedBy(new BigNumber(decimals));
+
+  return new BigNumber(bigNumber).dividedBy(dividend).toString();
 }
 
 module.exports = {
