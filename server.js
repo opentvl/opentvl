@@ -55,7 +55,7 @@ app.get("/projects/:project", async (req, res) => {
     if (!version) {
       // to keep compatibility with old adapters
       // new adapters should handle toSymbols inside the adapters themselves
-      output = await sdk.eth.util.toSymbols(output);
+      output = (await sdk.eth.util.toSymbols(output)).output;
     }
 
     console.log("Final Result", output);
