@@ -1,0 +1,121 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`abi multicall with bad address 1`] = `
+Object {
+  "callCount": 1,
+  "output": Array [
+    Object {
+      "input": Object {
+        "params": Array [],
+        "target": "0x000000000000000000000000000000000000dEaD",
+      },
+      "output": undefined,
+      "success": false,
+    },
+    Object {
+      "input": Object {
+        "params": Array [],
+        "target": "0x0000000000000000000000000000000000000000",
+      },
+      "output": undefined,
+      "success": false,
+    },
+    Object {
+      "input": Object {
+        "params": Array [],
+        "target": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+      },
+      "output": undefined,
+      "success": false,
+    },
+    Object {
+      "input": Object {
+        "params": Array [],
+        "target": "0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82",
+      },
+      "output": "Cake",
+      "success": true,
+    },
+    Object {
+      "input": Object {
+        "params": Array [],
+        "target": "0xa8c2b8eec3d368c0253ad3dae65a5f2bbb89c929",
+      },
+      "output": "CTK",
+      "success": true,
+    },
+  ],
+}
+`;
+
+exports[`abi multicall with bad address 2`] = `
+Object {
+  "callCount": 1,
+  "output": Array [
+    Object {
+      "input": Object {
+        "params": Array [],
+        "target": "0x000000000000000000000000000000000000dEaD",
+      },
+      "output": undefined,
+      "success": false,
+    },
+    Object {
+      "input": Object {
+        "params": Array [],
+        "target": "0x0000000000000000000000000000000000000000",
+      },
+      "output": undefined,
+      "success": false,
+    },
+    Object {
+      "input": Object {
+        "params": Array [],
+        "target": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+      },
+      "output": undefined,
+      "success": false,
+    },
+    Object {
+      "input": Object {
+        "params": Array [],
+        "target": "0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82",
+      },
+      "output": 18,
+      "success": true,
+    },
+    Object {
+      "input": Object {
+        "params": Array [],
+        "target": "0xa8c2b8eec3d368c0253ad3dae65a5f2bbb89c929",
+      },
+      "output": 6,
+      "success": true,
+    },
+  ],
+}
+`;
+
+exports[`abi multicall with cached abi 1`] = `
+Object {
+  "callCount": 1,
+  "output": Array [
+    Object {
+      "input": Object {
+        "params": Array [],
+        "target": "0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82",
+      },
+      "output": 18,
+      "success": true,
+    },
+    Object {
+      "input": Object {
+        "params": Array [],
+        "target": "0xa8c2b8eec3d368c0253ad3dae65a5f2bbb89c929",
+      },
+      "output": 6,
+      "success": true,
+    },
+  ],
+}
+`;

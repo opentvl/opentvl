@@ -9,16 +9,16 @@ const START_BLOCK = 586851
 const FACTORY = '0xbcfccbde45ce874adcb698cc183debcf17952812'
 
 async function tvl(_, block) {
-  const supportedTokens = await sdk.bsc.api.util
+  const supportedTokens = await sdk.bsc.util
     .tokenList()
     .then(supportedTokens => supportedTokens.map(({ contract }) => contract))
 
   //console.log("TOKENS", supportedTokens.slice(0, 3))
 
   const logs = (
-    await sdk.bsc.api.util.getLogs({
+    await sdk.bsc.util.getLogs({
       keys: [],
-      toBlock: block,
+      toBlock: block.bsc,
       target: FACTORY,
       fromBlock: START_BLOCK,
       topic: 'PairCreated(address,address,address,uint256)'
@@ -36,22 +36,22 @@ async function tvl(_, block) {
     .map(pairAddress => pairAddress.toLowerCase())
 
   const [token0Addresses, token1Addresses] = await Promise.all([
-    sdk.bsc.api.abi
+    sdk.bsc.abi
       .multiCall({
         abi: token0,
         calls: pairAddresses.map(pairAddress => ({
           target: pairAddress
         })),
-        block
+        block: block.bsc
       })
       .then(({ output }) => output),
-    sdk.bsc.api.abi
+    sdk.bsc.abi
       .multiCall({
         abi: token1,
         calls: pairAddresses.map(pairAddress => ({
           target: pairAddress
         })),
-        block
+        block: block.bsc
       })
       .then(({ output }) => output)
   ])
@@ -73,7 +73,7 @@ async function tvl(_, block) {
     }
   })
 
-  console.log("NUM PAIRS", Object.keys(pairs).length)
+  console.log('NUM PAIRS', Object.keys(pairs).length)
 
   // add token1Addresses
   token1Addresses.forEach(token1Address => {
@@ -90,18 +90,21 @@ async function tvl(_, block) {
   })
 
   const reserves = (
-    await sdk.bsc.api.abi.multiCall({
+    await sdk.bsc.abi.multiCall({
       abi: getReserves,
       calls: Object.keys(pairs).map(pairAddress => ({
         target: pairAddress
       })),
-      block
+      block: block.bsc
     })
   ).output
 
-  console.log("RESERVES", reserves.filter(r => r.output['0'] !== '0').slice(0, 5))
+  console.log(
+    'RESERVES',
+    reserves.filter(r => r.output['0'] !== '0').slice(0, 5)
+  )
 
-  return reserves.reduce((accumulator, reserve, i) => {
+  const nums = reserves.reduce((accumulator, reserve, i) => {
     if (reserve.success) {
       const pairAddress = reserve.input.target.toLowerCase()
       const pair = pairs[pairAddress] || {}
@@ -138,25 +141,15 @@ async function tvl(_, block) {
 
     return accumulator
   }, {})
+
+  return (await sdk.bsc.util.toSymbols(nums)).output
 }
 
 module.exports = {
+  version: '2', // to distinguish old version from new version
   name: 'Pancakeswap',
   token: 'CAKE',
   category: 'dexes',
   start: 1541116800, // 11/02/2018 @ 12:00am (UTC)
   tvl
 }
-
-//TODO REMOVE
-function main() {
-  tvl(undefined, 6592003)
-    .then(value => {
-      console.log("RES", value)
-
-      const sum = Object.keys(value).reduce((acc, vl) => acc.plus(vl), new BigNumber(0))
-      console.log("TVL", sum.toFixed())
-    })
-}
-
-//main()

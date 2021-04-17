@@ -1,7 +1,10 @@
 const utils = require("web3-utils");
-const debug = require("debug")("web3");
+const _ = require("underscore");
+const debug = require("debug")("open-tvl:web3");
+const MULTICALL = require("../abis/multicall.json");
+const MULTICALL_CHUNK_SIZE = 400;
 
-async function getBalance({ web3, limiter, target, block }) {
+async function getBalance({ web3, limiter, target }) {
   debug("getBalance", target);
 
   // ignore block since it requires archive nodes
@@ -15,7 +18,7 @@ async function getBalance({ web3, limiter, target, block }) {
   };
 }
 
-async function getBalances({ web3, limiter, block, targets }) {
+async function getBalances({ web3, limiter, targets }) {
   debug("getBalances", targets);
 
   // ignore block since it requires archive nodes
@@ -96,8 +99,20 @@ async function getLogs({ web3, scan, limiter, target, topic, keys = [], fromBloc
   };
 }
 
+function normalizeCallParams(params) {
+  if (!params) {
+    return [];
+  }
+
+  if (Array.isArray(params)) {
+    return params;
+  }
+
+  return [params];
+}
+
 async function callOne(web3, abi, target, params) {
-  const contract = new web3.Contract([abi], target); // arg.target || target);
+  const contract = new web3.Contract([abi], target);
   const functionSignature = web3.abi.encodeFunctionSignature(abi);
   const method = contract.methods[functionSignature];
 
@@ -108,22 +123,10 @@ async function callOne(web3, abi, target, params) {
   //
   // the consequence is that we can only get accurate tvl at latest block id
 
-  try {
-    // debug("callOne", abi.name, target, params, result);
-    const result = await method(...(params || [])).call();
+  // debug("callOne", abi.name, target, params, result);
+  const result = await method(...normalizeCallParams(params)).call();
 
-    return {
-      input: { target, params },
-      success: true,
-      output: result
-    }
-  } catch(err) {
-    return {
-      input: { target, params },
-      success: false,
-      output: err
-    }
-  }
+  return result;
 }
 
 async function singleCall({ web3, limiter, target, abi, block, params }) {
@@ -136,14 +139,49 @@ async function singleCall({ web3, limiter, target, abi, block, params }) {
   return { callCount: 1, output: result };
 }
 
-async function multiCall({ web3, limiter, target, abi, block, calls }) {
+async function multiCall({ web3, multiCallProvider, limiter, target, abi, block, calls }) {
   debug("multiCall", target, abi.name, block, calls);
 
-  const rateLimitedCallOne = limiter.wrap(callOne);
+  if (calls.length === 0) return { callCount: 0, output: [] };
 
-  const results = await Promise.all(calls.map(arg => rateLimitedCallOne(web3, abi, arg.target, arg.params)));
+  const multiCallContract = new web3.Contract(MULTICALL, multiCallProvider);
 
-  return { callCount: calls.length, output: results };
+  const rateLimitedCallChunk = limiter.wrap(async callChunk => {
+    const txs = callChunk.map(call => ({
+      delegateCall: false,
+      revertOnError: true,
+      gasLimit: 0,
+      target: call.target || target,
+      value: 0,
+      data: web3.abi.encodeFunctionCall(abi, normalizeCallParams(call.params))
+    }));
+
+    const response = await multiCallContract.methods.multiCall(txs).call();
+
+    return response._results.map((res, idx) => {
+      const callResult = web3.abi.decodeParameters(abi.outputs, res);
+
+      return {
+        input: {
+          target: callChunk[idx].target || target,
+          params: normalizeCallParams(callChunk[idx].params)
+        },
+        success: response._successes[idx],
+        // according to SDK doc, if there's only one, return result directly
+        output: abi.outputs.length === 1 ? callResult[0] : callResult
+      };
+    });
+  });
+
+  const callChunks = _.chunk(calls, MULTICALL_CHUNK_SIZE);
+
+  const responses = (
+    await Promise.all(callChunks.map(async callChunk => await rateLimitedCallChunk(callChunk)))
+  ).flat();
+
+  // debug("Multicall Result", responses);
+
+  return { callCount: callChunks.length, output: responses };
 }
 
 module.exports = {
