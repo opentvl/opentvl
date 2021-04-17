@@ -402,5 +402,9 @@
   {
     "symbol": "WETH",
     "contract": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+  },
+  {
+    "symbol": "EWTB",
+    "contract": "0x178c820f862b14f316509ec36b13123da19a6054"
   }
 ]

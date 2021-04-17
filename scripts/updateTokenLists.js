@@ -3,10 +3,11 @@ const fs = require('fs');
 
 const BSC_TOKENS = require("../sdk/data/bscTokenLists.json");
 const ETH_TOKENS = require("../sdk/data/ethTokenLists.json");
+const NEW_ADDRESSES = require("../data/bscContractAddresses.json");
 
 async function updateTokenLists() {
   const bscDecimals = await Promise.all(
-    BSC_TOKENS.map(({ contract }) => sdk.bsc.api.bep20.decimals(contract))
+    BSC_TOKENS.map(({ contract }) => sdk.bsc.bep20.decimals(contract))
   )
 
   const bscTokensWithDecimals = BSC_TOKENS.map(({ symbol, contract }, i) => ({

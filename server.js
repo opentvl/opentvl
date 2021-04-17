@@ -35,12 +35,8 @@ app.get("/projects/:project", async (req, res) => {
 
     const { tvl, version } = require(`./projects/${project}/index.js`);
 
-<<<<<<< HEAD
     const ethBlock = await ETH_WEB3.getBlockNumber();
     const bscBlock = await BSC_WEB3.getBlockNumber();
-=======
-  const output = await tvl(0, 12247364);
->>>>>>> cleaning up changes
 
     let block = {
       eth: ethBlock,

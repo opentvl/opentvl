@@ -1,20 +1,18 @@
 const BigNumber = require('bignumber.js')
 
-const sdk = require('../../sdk');
-const token0 = require('./abis/token0.json');
-const token1 = require('./abis/token1.json');
-const getReserves = require('./abis/getReserves.json');
+const sdk = require('../../sdk')
+const token0 = require('./abis/token0.json')
+const token1 = require('./abis/token1.json')
+const getReserves = require('./abis/getReserves.json')
 
-const fetch = require("node-fetch");
+const START_BLOCK = 470617
+const FACTORY = '0x01bf7c66c6bd861915cdaae475042d3c4bae16a7'
 
-const START_BLOCK = 586851;
-const FACTORY = '0xbcfccbde45ce874adcb698cc183debcf17952812';
-
-/*async function getPairAddresses() {
+async function getPairAddresses(block) {
   const logs = (
     await sdk.bsc.util.getLogs({
       keys: [],
-      toBlock: block.bsc,
+      toBlock: block,
       target: FACTORY,
       fromBlock: START_BLOCK,
       topic: 'PairCreated(address,address,address,uint256)'
@@ -29,28 +27,15 @@ const FACTORY = '0xbcfccbde45ce874adcb698cc183debcf17952812';
     // lowercase
     .map(pairAddress => pairAddress.toLowerCase())
 
-  fs.writeFileSync('./pairAddresses.json', JSON.stringify(pairAddresses))
-
-  return pairAddresses;
-}*/
-
-async function fetchPairAddresses() {
-  const result = await (
-    await fetch("https://api.pancakeswap.finance/api/v1/stat")
-  ).json();
-
-  const pairAddresses = result.trade_pairs
-    .map(({ swap_pair_contract }) => swap_pair_contract.toLowerCase())
-
   return pairAddresses;
 }
 
 async function tvl(_, block) {
   const supportedTokens = await sdk.bsc.util
     .tokenList()
-    .then(supportedTokens => supportedTokens.map(({ contract }) => contract));
+    .then(supportedTokens => supportedTokens.map(({ contract }) => contract))
 
-  const pairAddresses = await fetchPairAddresses();
+  const pairAddresses = await getPairAddresses(block);
 
   const [token0Addresses, token1Addresses] = await Promise.all([
     sdk.bsc.abi
@@ -59,7 +44,7 @@ async function tvl(_, block) {
         calls: pairAddresses.map(pairAddress => ({
           target: pairAddress
         })),
-        block: block.bsc
+        block
       })
       .then(({ output }) => output),
     sdk.bsc.abi
@@ -68,10 +53,12 @@ async function tvl(_, block) {
         calls: pairAddresses.map(pairAddress => ({
           target: pairAddress
         })),
-        block: block.bsc
+        block
       })
       .then(({ output }) => output)
   ])
+
+  //console.log('got addrs', token0Addresses.slice(0, 2), token1Addresses.slice(0, 2))
 
   const pairs = {}
   // add token0Addresses
@@ -108,7 +95,7 @@ async function tvl(_, block) {
       calls: Object.keys(pairs).map(pairAddress => ({
         target: pairAddress
       })),
-      block: block.bsc
+      block
     })
   ).output
 
@@ -150,11 +137,12 @@ async function tvl(_, block) {
     return accumulator
   }, {})
 
+
+
   return reserveBalances
 }
 
 module.exports = {
-  version: '2', // to distinguish old version from new version
   name: 'Pancakeswap',
   token: 'CAKE',
   category: 'dexes',
