@@ -15,6 +15,10 @@ const AAVE = '0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9'
 const AAVE_CREATOR = '0x51f22ac850d29c879367a77d241734acb276b815'
 
 async function tvl(_, block) {
+  /* test block */
+  console.log('eth (latest) block id', block.eth)
+  console.log('bsc (latest) block id', block.bsc)
+
   /* test ETH apis */
   console.log('sdk.eth.erc20.info', (await sdk.eth.erc20.info(AAVE)).output)
   console.log('sdk.eth.erc20.symbol', (await sdk.eth.erc20.symbol(AAVE)).output)
