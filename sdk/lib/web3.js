@@ -24,7 +24,13 @@ async function getBalances({ web3, limiter, targets }) {
   // ignore block since it requires archive nodes
   const rateLimitedGetBalance = limiter.wrap(web3.getBalance);
 
-  const balances = await Promise.all(targets.map(target => rateLimitedGetBalance(target)));
+  const balances = await Promise.all(
+    targets.map(async target => {
+      const balance = await rateLimitedGetBalance(target);
+
+      return { target, balance };
+    })
+  );
 
   return {
     callCount: targets.length,
