@@ -32,7 +32,31 @@ async function getBalances({ web3, limiter, targets }) {
   };
 }
 
-async function getLogs({ web3, scan, limiter, target, topic, keys = [], fromBlock, toBlock }) {
+// group blocks into group ranges which covers all the numbers
+function groupBlocks(blockIds, batchSize) {
+  if (blockIds.length < 2) {
+    return blockIds;
+  }
+
+  const sortedIds = blockIds.sort((i1, i2) => i1 - i2);
+
+  let groupStart = sortedIds[0];
+  let groups = [];
+
+  for (let i = 1; i < sortedIds.length; i++) {
+    if (sortedIds[i] > groupStart + batchSize) {
+      groups.push([groupStart, sortedIds[i - 1]]);
+
+      groupStart = sortedIds[i];
+    }
+  }
+
+  groups.push([groupStart, sortedIds[sortedIds.length - 1]]);
+
+  return groups;
+}
+
+async function getLogs({ web3, scan, limiter, batchSize, target, topic, keys = [], fromBlock, toBlock }) {
   debug("getLogs", target, topic, keys, fromBlock, toBlock);
 
   // assume scattered events can be returned in one page
@@ -43,8 +67,10 @@ async function getLogs({ web3, scan, limiter, target, topic, keys = [], fromBloc
   debug("found txs count", txs.length);
 
   const blocks = txs.reduce((acc, tx) => {
-    if (!acc.includes(tx.blockNumber)) {
-      acc.push(tx.blockNumber);
+    const height = parseInt(tx.blockNumber, 10);
+
+    if (!acc.includes(height)) {
+      acc.push(height);
     }
 
     return acc;
@@ -52,18 +78,22 @@ async function getLogs({ web3, scan, limiter, target, topic, keys = [], fromBloc
 
   debug("found unique block ids", blocks.length);
 
+  const blockGroups = groupBlocks(blocks, batchSize);
+
+  debug("arranged into groups", blockGroups.length);
+
   const rateLimitedGetPastLogs = limiter.wrap(web3.getPastLogs);
 
   const allLogRequests = await Promise.all(
-    blocks.map(async block => {
+    blockGroups.map(async ([fromBlock, toBlock]) => {
       const logs = await rateLimitedGetPastLogs({
-        fromBlock: block,
-        toBlock: block,
+        fromBlock,
+        toBlock,
         address: target,
         topics: [utils.sha3(topic)]
       });
 
-      debug("GetPastLogs for block", block);
+      debug(`GetPastLogs from block ${fromBlock} to ${toBlock}`);
 
       return logs;
     })
@@ -159,17 +189,29 @@ async function multiCall({ web3, multiCallProvider, limiter, target, abi, block,
     const response = await multiCallContract.methods.multiCall(txs).call();
 
     return response._results.map((res, idx) => {
-      const callResult = web3.abi.decodeParameters(abi.outputs, res);
-
-      return {
-        input: {
-          target: callChunk[idx].target || target,
-          params: normalizeCallParams(callChunk[idx].params)
-        },
-        success: response._successes[idx],
-        // according to SDK doc, if there's only one, return result directly
-        output: abi.outputs.length === 1 ? callResult[0] : callResult
+      const input = {
+        target: callChunk[idx].target || target,
+        params: normalizeCallParams(callChunk[idx].params)
       };
+
+      try {
+        const callResult = web3.abi.decodeParameters(abi.outputs, res);
+
+        return {
+          input,
+          success: response._successes[idx],
+          // according to SDK doc, if there's only one, return result directly
+          output: abi.outputs.length === 1 ? callResult[0] : callResult
+        };
+      } catch (decodeErr) {
+        console.log("decode err", abi.name, callChunk[idx].target || target, callChunk[idx].params, decodeErr.message);
+
+        return {
+          input,
+          success: false,
+          output: decodeErr.message
+        };
+      }
     });
   });
 

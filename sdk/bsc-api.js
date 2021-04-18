@@ -22,6 +22,7 @@ const BSC_WEB3 = new Eth(BSC_RPC_URL);
 const BSC_SCAN = new Etherscan(BSC_SCAN_KEY, "https://api.bscscan.com/api");
 const BSC_LIMITER = new Bottleneck({ maxConcurrent: 10, minTime: 50 });
 const BSC_MULTICALL_PROVIDER = "0xe7144e57d832c9005D252f415d205b4b8D78228e";
+const BSC_GET_LOGS_BATCH_SIZE = 5000;
 
 const NATIVE_TOKEN_ADDRESS = "0x0000000000000000000000000000000000000000";
 const NATIVE_TOKEN_SYMBOL = "BNB";
@@ -97,6 +98,7 @@ async function utilGetLogs({ target, topic, keys, fromBlock, toBlock }) {
     web3: BSC_WEB3,
     scan: BSC_SCAN,
     limiter: BSC_LIMITER,
+    batchSize: BSC_GET_LOGS_BATCH_SIZE,
     target,
     topic,
     keys,
@@ -124,13 +126,17 @@ async function utilToSymbols(addressesBalances) {
   });
   const symbolsByAddresses = symbolsRequests.output.reduce(
     (acc, t) => {
-      acc[t.input.target] = t.output;
+      if (t.success) {
+        acc[t.input.target] = t.output;
+      }
       return acc;
     },
     {
       [NATIVE_TOKEN_ADDRESS]: NATIVE_TOKEN_SYMBOL
     }
   );
+
+  debug("toSymbols symbolsByAddresses", symbolsByAddresses);
 
   const decimalsRequests = await abiMultiCall({
     abi: "bep20:decimals",
@@ -140,7 +146,9 @@ async function utilToSymbols(addressesBalances) {
   });
   const decimalsByAddresses = decimalsRequests.output.reduce(
     (acc, t) => {
-      acc[t.input.target] = t.output;
+      if (t.success) {
+        acc[t.input.target] = t.output;
+      }
       return acc;
     },
     {
@@ -148,8 +156,12 @@ async function utilToSymbols(addressesBalances) {
     }
   );
 
+  debug("toSymbols decimalsByAddresses", decimalsByAddresses);
+
   const output = Object.keys(addressesBalances).reduce((acc, addr) => {
-    acc[symbolsByAddresses[addr]] = applyDecimals(addressesBalances[addr], decimalsByAddresses[addr]);
+    if (addressesBalances[addr] !== "NaN" && symbolsByAddresses[addr] && decimalsByAddresses[addr]) {
+      acc[symbolsByAddresses[addr]] = applyDecimals(addressesBalances[addr], decimalsByAddresses[addr]);
+    }
 
     return acc;
   }, {});

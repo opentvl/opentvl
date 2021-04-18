@@ -21,8 +21,9 @@ const ETH_SCAN_KEY = process.env.ETH_SCAN_KEY;
 
 const ETH_WEB3 = new Eth(ETH_RPC_URL);
 const ETH_SCAN = new Etherscan(ETH_SCAN_KEY, "https://api.etherscan.io/api");
-const ETH_LIMITER = new Bottleneck({ maxConcurrent: 10, minTime: 50 });
+const ETH_LIMITER = new Bottleneck({ maxConcurrent: 5, minTime: 100 });
 const ETH_MULTICALL_PROVIDER = "0xCa731e0f33Afbcfa9363d6F7449d1f5447d10C80";
+const ETH_GET_LOGS_BATCH_SIZE = 10000;
 
 const NATIVE_TOKEN_ADDRESS = "0x0000000000000000000000000000000000000000";
 const NATIVE_TOKEN_SYMBOL = "ETH";
@@ -98,6 +99,7 @@ async function utilGetLogs({ target, topic, keys, fromBlock, toBlock }) {
     web3: ETH_WEB3,
     scan: ETH_SCAN,
     limiter: ETH_LIMITER,
+    batchSize: ETH_GET_LOGS_BATCH_SIZE,
     target,
     topic,
     keys,
@@ -145,7 +147,9 @@ async function utilToSymbols(addressesBalances) {
   });
   const symbolsByAddresses = symbolsRequests.output.reduce(
     (acc, t) => {
-      acc[t.input.target] = t.output;
+      if (t.success) {
+        acc[t.input.target] = t.output;
+      }
       return acc;
     },
     {
@@ -161,7 +165,9 @@ async function utilToSymbols(addressesBalances) {
   });
   const decimalsByAddresses = decimalsRequests.output.reduce(
     (acc, t) => {
-      acc[t.input.target] = t.output;
+      if (t.success) {
+        acc[t.input.target] = t.output;
+      }
       return acc;
     },
     {
@@ -170,7 +176,9 @@ async function utilToSymbols(addressesBalances) {
   );
 
   const output = Object.keys(addressesBalances).reduce((acc, addr) => {
-    acc[symbolsByAddresses[addr]] = applyDecimals(addressesBalances[addr], decimalsByAddresses[addr]);
+    if (addressesBalances[addr] !== "NaN" && symbolsByAddresses[addr] && decimalsByAddresses[addr]) {
+      acc[symbolsByAddresses[addr]] = applyDecimals(addressesBalances[addr], decimalsByAddresses[addr]);
+    }
 
     return acc;
   }, {});
