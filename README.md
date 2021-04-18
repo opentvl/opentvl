@@ -1,29 +1,55 @@
-# TVL Project Templates
+# OpenTVL
+
+Open TVL definitions for DeFi projects with multiple chain support
+
+## Why OpenTVL
+
+Total Value Locked(TVL) is one of the best metrics to measure the trust from the community to a DeFi project.
+
+As an pioneer who made TVL popular, DeFiPulse.com opensourced their [TVL adapters repo](https://github.com/ConcourseOpen/DeFi-Pulse-Adapters), many projects has contributed to it, but it still has a little bit restriction and relies on DeFiPulse's private APIs to work.
+
+It is critical that for an average investor, they should be able to view the code, as well as requesting from multiple trustworthy data sources to verify that the TVL number for a project is accurate. And TVL numbers should be some public assets and not being controlled by one or several private companies.
+
+To solve the above problems, OpenTVL came out as the solution to enable community collaboration and public ownship of TVL definitions.
+
+## OpenTVL Principles
+
+1. Decentralized: All data source should rely on-chain data whenever possible, any requests to DeFi projects' own API is a compromise
+2. Cross Chain By Nature: TVL in different chains should be aggregated to show a total number
+3. Open & Free: Everyone should be able to view definitions, and have the right to host their own tvl API server, and all those numbers should match whereever one host them
+4. Community Driven: Project adapters should be built and reviewed by community - both DeFi vendors and investors should be involved to ensure that TVL calculation for a project is reasonable and practical
 
 ## Documentation Links
 
-[SDK Reference](https://github.com/certikfoundation/TVL-Adapters/blob/master/docs/sdk.md)
+[SDK Reference](./docs/sdk.md)
 
 ## Getting Started with the Adapter
 
 Once you have the repo cloned locally, install dependencies by running:
 
 ```
-npm install
+yarn install
 ```
 
 Next you'll need to create a `.env` file. An example file `.env.example` is provided for you to use as a starting point.
 
 ```
-SDK_KEY='SDK_KEY_HERE'
+BSC_SCAN_KEY=<apply-your-key-in-bscscan.com>
+BSC_RPC_URL=https://bsc-dataseed.binance.org/ # can be replaced with other bsc rpc url
+ETH_SCAN_KEY=<apply-your-key-in-etherscan.io>
+ETH_RPC_URL=<apply-your-eth-rpc-in-alchemyapi.io> # https://eth-mainnet.alchemyapi.io/v2/<key>
 ```
-
-You'll obtain your SDK key in the course of the listing process described above. Each project using the SDK requires an individual SDK key so that we can keep tabs on the web3 call volume each adapter creates in our back-end. We do not limit the number of web3 calls an adapter can make, but ask projects to optimize their call volume whenever possible.
 
 To verify that you have access and everything is working, try running:
 
 ```
-npm run test -- --project=_template
+yarn start
+```
+
+and check the test project
+
+```
+curl http://localhost:7890/projects/test
 ```
 
 The test should complete successfully.
@@ -52,7 +78,7 @@ The main tvl function of a project adapter is where token balances are fetched. 
 async function tvl(timestamp, block) {
   let balances = {
     "0x0000000000000000000000000000000000000000": 1000000000000000000, // ETH
-    "0x6B175474E89094C44Da98b954EedeAC495271d0F": 2000000000000000000, // DAI
+    "0x6B175474E89094C44Da98b954EedeAC495271d0F": 2000000000000000000 // DAI
   };
 
   return balances;
@@ -81,7 +107,7 @@ async function run(timestamp, block) {
   let getBalance = await sdk.api.eth.getBalance({ target: "0xc0829421C1d260BD3cB3E0F06cfE2D52db2cE315", block });
 
   let balances = {
-    "0x0000000000000000000000000000000000000000": getBalance.output,
+    "0x0000000000000000000000000000000000000000": getBalance.output
   };
 
   let calls = await GenerateCallList(timestamp);
@@ -89,7 +115,7 @@ async function run(timestamp, block) {
   let balanceOfResults = await sdk.api.abi.multiCall({
     block,
     calls,
-    abi: "erc20:balanceOf",
+    abi: "erc20:balanceOf"
   });
 
   await sdk.util.sumMultiBalanceOf(balances, balanceOfResults);
@@ -114,13 +140,13 @@ let getBalance = await sdk.api.eth.getBalance({ target: "0xc0829421C1d260BD3cB3E
 let balanceOfResults = await sdk.api.abi.multiCall({
   block,
   calls,
-  abi: "erc20:balanceOf",
+  abi: "erc20:balanceOf"
 });
 ```
 
 These illustrate the most common SDK interactions for most adapters - running one view/function on a single token/address, and running batches of a given view/function on multiple tokens/address with different parameters.
 
-[Full documentation of available functions in the SDK](https://github.com/certikfoundation/TVL-Adapters/blob/master/docs/sdk.md)
+[Full documentation of available functions in the SDK](./docs/sdk.md)
 
 In some cases not all necessary data can be obtained on-chain and/or through the SDK, the `bancor` adapter for example hits a proprietary API to retrieve a list of tokens and addresses that need to be tracked since this information isn't available on-chain. We understand that this is sometimes necessary, and there are some unavoidable cases where off-chain data sources need to be used but wherever possible on-chain/transparent data sources should be prioritized over alternatives. Any unavoidable use of off-chain data sources should be discussed prior to implementation.
 
@@ -130,23 +156,25 @@ Each project adapter needs to export the main run function, in addition to some 
 
 ```js
 module.exports = {
+  version: "2", // version 2 is the recommended one with multichain support
   name: "Template Project", // project name
   token: null, // null, or token symbol if project has a custom token
   category: "assets", // allowed values: 'derivatives', 'dexes', 'lending', 'payments', 'assets'
   start: 1514764800, // unix timestamp (utc 0) specifying when the project began, or where live data begins
-  tvl, // tvl adapter
+  tvl // tvl adapter
 };
 ```
 
-Here's a look at the `bancor` adapter for a practical example of this:
+Here's a look at the `pancakeswap` adapter for a practical example of this:
 
 ```js
 module.exports = {
-  name: "Bancor",
-  token: "BNT",
+  version: "2",
+  name: "PancakeSwap",
+  token: "CAKE",
   category: "dexes",
   start: 1501632000, // 08/02/2017 @ 12:00am (UTC)
-  tvl,
+  tvl
 };
 ```
 
