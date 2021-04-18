@@ -7,6 +7,7 @@ const util = require("./util");
 module.exports = {
   bsc: bscApi,
   eth: ethApi,
+  // keep compatibility for old adapters
   api: ethApi,
   util: util
 };
