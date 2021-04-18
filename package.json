@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "nodemon --exec 'node server.js' -e 'js yml json'",
+    "dev": "nodemon --exec 'DEBUG=opentvl:* node server.js' -e 'js yml json'",
+    "start": "node server.js",
     "test": "jest --forceExit test/handler.spec.js",
     "test:bsc": "jest --forceExit bscapi",
     "deploy": "serverless deploy"

@@ -1,6 +1,6 @@
 const utils = require("web3-utils");
 const _ = require("underscore");
-const debug = require("debug")("open-tvl:web3");
+const debug = require("debug")("opentvl:web3");
 const MULTICALL = require("../abis/multicall.json");
 const MULTICALL_CHUNK_SIZE = 400;
 
@@ -100,7 +100,7 @@ async function getLogs({ web3, scan, limiter, target, topic, keys = [], fromBloc
 }
 
 function normalizeCallParams(params) {
-  if (!params) {
+  if (params === undefined) {
     return [];
   }
 

@@ -4,7 +4,7 @@ const Bottleneck = require("bottleneck");
 const BEP20 = require("./abis/bep20.json");
 const tokenList = require("./data/bscTokenLists.json");
 const { getBalance, getBalances, getLogs, singleCall, multiCall } = require("./lib/web3");
-const debug = require("debug")("open-tvl:bsc-api");
+const debug = require("debug")("opentvl:bsc-api");
 const { applyDecimals } = require("./lib/big-number");
 
 if (!process.env.BSC_RPC_URL) {

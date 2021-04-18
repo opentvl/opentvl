@@ -2,6 +2,7 @@ const Eth = require("web3-eth");
 const express = require("express");
 const { readdir } = require("fs").promises;
 const sdk = require("./sdk");
+const debug = require("debug")("opentvl:server");
 
 const app = express();
 const port = 7890;
@@ -24,8 +25,12 @@ async function hasProject(project) {
 }
 
 app.get("/projects/:project", async (req, res) => {
+  const startedAt = Date.now();
+
   try {
     const project = req.params.project;
+
+    debug("received request for project", project);
 
     if (!(await hasProject(project))) {
       res.status(400).json(JSON.stringify({ error: `unknown project ${project}` }));
@@ -35,6 +40,8 @@ app.get("/projects/:project", async (req, res) => {
 
     const { tvl, version } = require(`./projects/${project}/index.js`);
 
+    debug("found tvl adapter version", version);
+
     const ethBlock = await ETH_WEB3.getBlockNumber();
     const bscBlock = await BSC_WEB3.getBlockNumber();
 
@@ -42,6 +49,8 @@ app.get("/projects/:project", async (req, res) => {
       eth: ethBlock,
       bsc: bscBlock
     };
+
+    debug("running tvl with block", block);
 
     if (!version) {
       // to keep compatibility with old adapters
@@ -58,7 +67,8 @@ app.get("/projects/:project", async (req, res) => {
       output = (await sdk.eth.util.toSymbols(output)).output;
     }
 
-    console.log("Final Result", output);
+    debug("final result", output);
+    debug(`total processing time ${Date.now() - startedAt}ms`);
 
     res.json(JSON.stringify(output));
   } catch (err) {
