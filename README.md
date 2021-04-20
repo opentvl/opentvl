@@ -38,6 +38,8 @@ BSC_SCAN_KEY=<apply-your-key-in-bscscan.com>
 BSC_RPC_URL=https://bsc-dataseed.binance.org/ # can be replaced with other bsc rpc url
 ETH_SCAN_KEY=<apply-your-key-in-etherscan.io>
 ETH_RPC_URL=<apply-your-eth-rpc-in-alchemyapi.io> # https://eth-mainnet.alchemyapi.io/v2/<key>
+HECO_SCAN_KEY=<apply-your-key-in-hecoinfo.com>
+HECO_RPC_URL=https://http-mainnet.hecochain.com # can be replaced with other heco rpc url
 ```
 
 To verify that you have access and everything is working, try running:

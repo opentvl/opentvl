@@ -1,0 +1,19 @@
+{
+  "name": "opentvl-sdk-contracts",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "truffle build",
+    "console": "truffle console",
+    "migrate": "truffle migrate",
+    "deploy": "truffle deploy",
+    "test": "truffle test"
+  },
+  "dependencies": {
+    "@truffle/hdwallet-provider": "^1.2.6"
+  },
+  "devDependencies": {
+    "truffle": "^5.3.2"
+  }
+}
