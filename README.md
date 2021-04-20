@@ -45,7 +45,7 @@ HECO_RPC_URL=https://http-mainnet.hecochain.com # can be replaced with other hec
 To verify that you have access and everything is working, try running:
 
 ```
-yarn start
+yarn dev
 ```
 
 and check the test project
@@ -55,6 +55,25 @@ curl http://localhost:7890/projects/test
 ```
 
 The test should complete successfully.
+
+## Run OpenTVL in Production
+
+You can host the project as a typical express server, the minimal setup on server:
+
+```
+git clone https://github.com/opentvl/opentvl
+cd opentvl
+yarn install
+vim .env # set your environment file
+yarn start
+```
+
+An alternative is by using the docker image:
+
+```
+docker run -d -e BSC_RPC_URL=$BSC_RPC_URL -e BSC_SCAN_KEY=$BSC_SCAN_KEY -e ETH_RPC_URL=$ETH_RPC_URL -e ETH_SCAN_KEY=$ETH_SCAN_KEY -e HECO_RPC_URL=$HECO_RPC_URL -e HECO_SCAN_KEY=$HECO_SCAN_KEY -p 7890:7890 opentvl:server 
+```
+
 
 ## GitHub Collaboration
 

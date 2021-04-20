@@ -1,5 +1,3 @@
-require("dotenv").config();
-
 const bscApi = require("./bsc-api");
 const ethApi = require("./eth-api");
 const hecoApi = require("./heco-api");

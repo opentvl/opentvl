@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const Eth = require("web3-eth");
 const express = require("express");
 const { readdir } = require("fs").promises;
@@ -76,6 +78,10 @@ app.get("/projects/:project", async (req, res) => {
 
     res.status(500).json({ error: err.message });
   }
+});
+
+app.get("/health", async (req, res) => {
+  res.json({ status: "HEALTHY" });
 });
 
 app.listen(port, () => {
