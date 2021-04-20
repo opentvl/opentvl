@@ -2,6 +2,8 @@
 
 Open TVL definitions for DeFi projects with multiple chain support
 
+![Docker Build Status](https://img.shields.io/docker/build/opentvl/server)
+
 ## Why OpenTVL
 
 Total Value Locked(TVL) is one of the best metrics to measure the trust from the community to a DeFi project.

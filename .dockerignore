@@ -4,3 +4,6 @@ scripts/
 test/
 test-from-sdk-runtime/
 sdk/contracts/
+README.md
+LICENSE
+jest.config.js
