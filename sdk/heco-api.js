@@ -173,8 +173,8 @@ async function utilToSymbols(addressesBalances) {
   };
 }
 
-async function bnbGetBalance({ target, block, decimals }) {
-  debug("heco.bnb.getBalance", { target, block, decimals });
+async function htGetBalance({ target, block, decimals }) {
+  debug("heco.ht.getBalance", { target, block, decimals });
 
   let { callCount, output } = await getBalance({
     web3: HECO_WEB3,
@@ -190,8 +190,8 @@ async function bnbGetBalance({ target, block, decimals }) {
   return { callCount, output };
 }
 
-async function bnbGetBalances({ targets, block, decimals }) {
-  debug("heco.bnb.getBalances", { targets, block, decimals });
+async function htGetBalances({ targets, block, decimals }) {
+  debug("heco.ht.getBalances", { targets, block, decimals });
 
   let { callCount, output } = await getBalances({
     web3: HECO_WEB3,
@@ -280,9 +280,9 @@ module.exports = {
     tokenList: utilTokenList,
     toSymbols: utilToSymbols
   },
-  bnb: {
-    getBalance: bnbGetBalance,
-    getBalances: bnbGetBalances
+  ht: {
+    getBalance: htGetBalance,
+    getBalances: htGetBalances
   },
   hrc20: {
     info: hrc20Info,
