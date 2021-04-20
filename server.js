@@ -69,9 +69,13 @@ app.get("/projects/:project/tvl_by_usd", async (req, res) => {
     }
 
     const output = await fetchTVL(project);
-    const tvlUSD = computeTVLUSD(output);
 
-    debug("final result", output);
+    debug("Start tvl compute")
+    const priceStartedAt = Date.now();
+    const tvlUSD = await computeTVLUSD(output);
+
+    debug("final result", tvlUSD);
+    debug(`price processing time ${Date.now() - priceStartedAt}`);
     debug(`total processing time ${Date.now() - startedAt}ms`);
 
     res.json(JSON.stringify(tvlUSD));
