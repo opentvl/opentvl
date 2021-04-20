@@ -1,18 +1,13 @@
-const BigNumber = require('bignumber.js')
-
 const sdk = require('../../sdk')
-const token0 = require('./abis/token0.json')
-const token1 = require('./abis/token1.json')
-const getReserves = require('./abis/getReserves.json')
 
-// const START_BLOCK = 586851
-// for testing we can use a smaller range
-const START_BLOCK = 6548398
-const FACTORY = '0xbcfccbde45ce874adcb698cc183debcf17952812'
 const CAKE = '0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82'
+const CAKE_CREATOR = '0x0f9399fc81dac77908a2dde54bb87ee2d17a3373'
 
 const AAVE = '0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9'
 const AAVE_CREATOR = '0x51f22ac850d29c879367a77d241734acb276b815'
+
+const MDEX = '0x25d2e80cb6b86881fd7e07dd263fb79f4abe033c'
+const MDEX_CREATOR = '0x06f46644d6e6d044ab008fb23bdc5bf3529bf3f0'
 
 async function tvl(_, block) {
   /* test block */
@@ -81,7 +76,7 @@ async function tvl(_, block) {
     })
   )
 
-  /* test bSC apis */
+  /* test bsc apis */
   console.log('sdk.bsc.bep20.info', (await sdk.bsc.bep20.info(CAKE)).output)
   console.log('sdk.bsc.bep20.symbol', (await sdk.bsc.bep20.symbol(CAKE)).output)
   console.log(
@@ -94,7 +89,8 @@ async function tvl(_, block) {
   )
   console.log(
     'sdk.bsc.bep20.balanceOf',
-    (await sdk.bsc.bep20.balanceOf({ target: CAKE, owner: FACTORY })).output
+    (await sdk.bsc.bep20.balanceOf({ target: CAKE, owner: CAKE_CREATOR }))
+      .output
   )
   console.log(
     'sdk.bsc.bnb.getBalance',
@@ -102,7 +98,7 @@ async function tvl(_, block) {
   )
   console.log(
     'sdk.bsc.bnb.getBalances',
-    (await sdk.bsc.bnb.getBalances({ targets: [CAKE, FACTORY] })).output
+    (await sdk.bsc.bnb.getBalances({ targets: [CAKE, CAKE_CREATOR] })).output
   )
   console.log(
     'sdk.bsc.util.getLogs',
@@ -129,7 +125,7 @@ async function tvl(_, block) {
     await sdk.bsc.abi.call({
       target: CAKE,
       abi: 'bep20:balanceOf',
-      params: [FACTORY]
+      params: [CAKE_CREATOR]
     })
   )
   console.log(
@@ -137,131 +133,78 @@ async function tvl(_, block) {
     await sdk.bsc.abi.multiCall({
       target: CAKE,
       abi: 'bep20:balanceOf',
-      calls: [{ params: [FACTORY] }, { params: [CAKE] }]
+      calls: [{ params: [CAKE_CREATOR] }, { params: [CAKE] }]
     })
   )
 
-  const supportedTokens = await sdk.bsc.util
-    .tokenList()
-    .then(supportedTokens => supportedTokens.map(({ contract }) => contract))
-
-  const logs = (
-    await sdk.bsc.util.getLogs({
-      keys: [],
-      toBlock: block.bsc,
-      target: FACTORY,
-      fromBlock: START_BLOCK,
-      topic: 'PairCreated(address,address,address,uint256)'
-    })
-  ).output
-
-  const pairAddresses = logs
-    // sometimes the full log is emitted
-    .map(log =>
-      typeof log === 'string' ? log : `0x${log.data.slice(64 - 40 + 2, 64 + 2)}`
-    )
-    // lowercase
-    .map(pairAddress => pairAddress.toLowerCase())
-
-  const [token0Addresses, token1Addresses] = await Promise.all([
-    sdk.bsc.abi
-      .multiCall({
-        abi: token0,
-        calls: pairAddresses.map(pairAddress => ({
-          target: pairAddress
-        })),
-        block: block.bsc
+  /* test heco apis */
+  console.log('sdk.heco.hrc20.info', (await sdk.heco.hrc20.info(MDEX)).output)
+  console.log(
+    'sdk.heco.hrc20.symbol',
+    (await sdk.heco.hrc20.symbol(MDEX)).output
+  )
+  console.log(
+    'sdk.heco.hrc20.decimals',
+    (await sdk.heco.hrc20.decimals(MDEX)).output
+  )
+  console.log(
+    'sdk.heco.hrc20.totalSupply',
+    (await sdk.heco.hrc20.totalSupply({ target: MDEX })).output
+  )
+  console.log(
+    'sdk.heco.hrc20.balanceOf',
+    (await sdk.heco.hrc20.balanceOf({ target: MDEX, owner: MDEX_CREATOR }))
+      .output
+  )
+  console.log(
+    'sdk.heco.ht.getBalance',
+    (await sdk.heco.ht.getBalance({ target: MDEX })).output
+  )
+  console.log(
+    'sdk.heco.ht.getBalances',
+    (await sdk.heco.ht.getBalances({ targets: [MDEX, MDEX_CREATOR] })).output
+  )
+  console.log(
+    'sdk.heco.util.getLogs',
+    (
+      await sdk.heco.util.getLogs({
+        target: MDEX,
+        fromBlock: 4019000,
+        toBlock: 4019100,
+        topic: 'Transfer(from,to,value)'
       })
-      .then(({ output }) => output),
-    sdk.bsc.abi
-      .multiCall({
-        abi: token1,
-        calls: pairAddresses.map(pairAddress => ({
-          target: pairAddress
-        })),
-        block: block.bsc
+    ).output
+  )
+  console.log(
+    'sdk.heco.util.tokenList',
+    (await sdk.heco.util.tokenList()).length
+  )
+  console.log(
+    'sdk.heco.util.toSymbols',
+    (
+      await sdk.heco.util.toSymbols({
+        [MDEX]: 123456
       })
-      .then(({ output }) => output)
-  ])
-
-  const pairs = {}
-  // add token0Addresses
-  token0Addresses.forEach(token0Address => {
-    if (token0Address.success) {
-      const tokenAddress = token0Address.output.toLowerCase()
-
-      if (supportedTokens.includes(tokenAddress)) {
-        const pairAddress = token0Address.input.target.toLowerCase()
-        pairs[pairAddress] = {
-          token0Address: tokenAddress
-        }
-      }
-    }
-  })
-
-  // add token1Addresses
-  token1Addresses.forEach(token1Address => {
-    if (token1Address.success) {
-      const tokenAddress = token1Address.output.toLowerCase()
-      if (supportedTokens.includes(tokenAddress)) {
-        const pairAddress = token1Address.input.target.toLowerCase()
-        pairs[pairAddress] = {
-          ...(pairs[pairAddress] || {}),
-          token1Address: tokenAddress
-        }
-      }
-    }
-  })
-
-  const reserves = (
-    await sdk.bsc.abi.multiCall({
-      abi: getReserves,
-      calls: Object.keys(pairs).map(pairAddress => ({
-        target: pairAddress
-      })),
-      block: block.bsc
+    ).output
+  )
+  console.log(
+    'sdk.heco.abi.call',
+    await sdk.heco.abi.call({
+      target: MDEX,
+      abi: 'hrc20:balanceOf',
+      params: [MDEX_CREATOR]
     })
-  ).output
+  )
+  console.log(
+    'sdk.heco.abi.multiCall',
+    await sdk.heco.abi.multiCall({
+      target: MDEX,
+      abi: 'hrc20:balanceOf',
+      calls: [{ params: [MDEX_CREATOR] }, { params: [MDEX] }]
+    })
+  )
 
-  const nums = reserves.reduce((accumulator, reserve, i) => {
-    if (reserve.success) {
-      const pairAddress = reserve.input.target.toLowerCase()
-      const pair = pairs[pairAddress] || {}
-
-      // handle reserve0
-      if (pair.token0Address) {
-        const reserve0 = new BigNumber(reserve.output['0'])
-        if (!reserve0.isZero()) {
-          const existingBalance = new BigNumber(
-            accumulator[pair.token0Address] || '0'
-          )
-
-          accumulator[pair.token0Address] = existingBalance
-            .plus(reserve0)
-            .toFixed()
-        }
-      }
-
-      // handle reserve1
-      if (pair.token1Address) {
-        const reserve1 = new BigNumber(reserve.output['1'])
-
-        if (!reserve1.isZero()) {
-          const existingBalance = new BigNumber(
-            accumulator[pair.token1Address] || '0'
-          )
-
-          accumulator[pair.token1Address] = existingBalance
-            .plus(reserve1)
-            .toFixed()
-        }
-      }
-    }
-
-    return accumulator
-  }, {})
-
-  return (await sdk.bsc.util.toSymbols(nums)).output
+  return {}
 }
 
 module.exports = {

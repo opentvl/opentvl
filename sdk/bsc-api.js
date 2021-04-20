@@ -49,7 +49,7 @@ function mapStringToABI(abiString) {
       break;
     }
     default:
-      throw new Error("Unknown string ABI");
+      throw new Error(`Unknown string ABI: ${abiString}`);
   }
   return abi;
 }

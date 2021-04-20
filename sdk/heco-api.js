@@ -22,7 +22,7 @@ const HECO_SCAN_KEY = process.env.HECO_SCAN_KEY;
 const HECO_WEB3 = new Eth(HECO_RPC_URL);
 const HECO_SCAN = new Etherscan(HECO_SCAN_KEY, "https://api.hecoinfo.com/api");
 const HECO_LIMITER = new Bottleneck({ maxConcurrent: 10, minTime: 50 });
-const HECO_MULTICALL_PROVIDER = "TODO";
+const HECO_MULTICALL_PROVIDER = "0xe7144e57d832c9005d252f415d205b4b8d78228e";
 const HECO_GET_LOGS_BATCH_SIZE = 5000;
 
 const NATIVE_TOKEN_ADDRESS = "0x0000000000000000000000000000000000000000";
@@ -49,7 +49,7 @@ function mapStringToABI(abiString) {
       break;
     }
     default:
-      throw new Error("Unknown string ABI");
+      throw new Error(`Unknown string ABI: ${abiString}`);
   }
   return abi;
 }
