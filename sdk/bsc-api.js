@@ -6,6 +6,7 @@ const tokenList = require("./data/bscTokenLists.json");
 const { getBalance, getBalances, getLogs, singleCall, multiCall } = require("./lib/web3");
 const debug = require("debug")("opentvl:bsc-api");
 const { applyDecimals } = require("./lib/big-number");
+const { getReservedBalances } = require("./lib/swap");
 
 if (!process.env.BSC_RPC_URL) {
   throw new Error(`Please set environment variable BSC_RPC_URL`);
@@ -261,6 +262,14 @@ async function bep20BalanceOf({ target, owner, block, decimals }) {
   return { callCount, output };
 }
 
+async function swapGetReservedBalances(pairAddresses) {
+  return getReservedBalances({
+    pairAddresses,
+    tokenList: await utilTokenList(),
+    multiCall: abiMultiCall
+  });
+}
+
 module.exports = {
   abi: {
     call: abiCall,
@@ -281,5 +290,8 @@ module.exports = {
     decimals: bep20Decimals,
     totalSupply: bep20TotalSupply,
     balanceOf: bep20BalanceOf
+  },
+  swap: {
+    getReservedBalances: swapGetReservedBalances
   }
 };
