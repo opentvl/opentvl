@@ -22,7 +22,7 @@ async function tvl(_, block) {
     })
   ).output;
 
-  const totalReward = (
+  const totalRewards = (
     await sdk.eth.erc20.balanceOf({
       target: rewardsTokenAddr,
       owner: STAKING_CONTRACT
@@ -33,7 +33,7 @@ async function tvl(_, block) {
 
   // reserve balance + reward balance
   const reserveBalances = {
-    [rewardsTokenAddr]: totalReward,
+    [rewardsTokenAddr]: totalRewards,
     ...totalReservedInPair
   };
 

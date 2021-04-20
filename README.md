@@ -38,6 +38,8 @@ BSC_SCAN_KEY=<apply-your-key-in-bscscan.com>
 BSC_RPC_URL=https://bsc-dataseed.binance.org/ # can be replaced with other bsc rpc url
 ETH_SCAN_KEY=<apply-your-key-in-etherscan.io>
 ETH_RPC_URL=<apply-your-eth-rpc-in-alchemyapi.io> # https://eth-mainnet.alchemyapi.io/v2/<key>
+HECO_SCAN_KEY=<apply-your-key-in-hecoinfo.com>
+HECO_RPC_URL=https://http-mainnet.hecochain.com # can be replaced with other heco rpc url
 ```
 
 To verify that you have access and everything is working, try running:
@@ -89,7 +91,7 @@ In the case of the `\_template' adapter, we're just using some hard coded values
 
 For consistency, we treat balances associated with token addresses as raw/wei values (before decimal conversion) and balances associated with token symbols as decimal converted values. Due to the methods most commonly available in core contracts for most projects (and a lack of broad standardization), we've found the most effective solution is for project adapters to work internally with token addresses; symbol conversions are done automatically after the adapter runs;
 
-The important thing is that the adapter is expected to output an object with token addresses and raw non-decimal converted balances. For the `_template` adapter, the output looks like this:
+The important thing is that the adapter is expected to output an object with token symbol and raw non-decimal converted balances. For the `_template` adapter, the output looks like this:
 
 ```js
 {
@@ -103,8 +105,8 @@ The important thing is that the adapter is expected to output an object with tok
 Your adapter will of course need to actually fetch real values unlike the `_template` example, so let's look at the `bancor` adapter for a real world example.
 
 ```js
-async function run(timestamp, block) {
-  let getBalance = await sdk.api.eth.getBalance({ target: "0xc0829421C1d260BD3cB3E0F06cfE2D52db2cE315", block });
+async function tvl(timestamp) {
+  let getBalance = await sdk.eth.getBalance({ target: "0xc0829421C1d260BD3cB3E0F06cfE2D52db2cE315" });
 
   let balances = {
     "0x0000000000000000000000000000000000000000": getBalance.output
@@ -112,8 +114,7 @@ async function run(timestamp, block) {
 
   let calls = await GenerateCallList(timestamp);
 
-  let balanceOfResults = await sdk.api.abi.multiCall({
-    block,
+  let balanceOfResults = await sdk.eth.abi.multiCall({
     calls,
     abi: "erc20:balanceOf"
   });
@@ -133,12 +134,11 @@ const sdk = require("../../sdk");
 2 methods are utilized for the `bancor` adapter:
 
 ```js
-let getBalance = await sdk.api.eth.getBalance({ target: "0xc0829421C1d260BD3cB3E0F06cfE2D52db2cE315", block });
+let getBalance = await sdk.eth.getBalance({ target: "0xc0829421C1d260BD3cB3E0F06cfE2D52db2cE315" });
 ```
 
 ```js
-let balanceOfResults = await sdk.api.abi.multiCall({
-  block,
+let balanceOfResults = await sdk.eth.abi.multiCall({
   calls,
   abi: "erc20:balanceOf"
 });
@@ -201,8 +201,8 @@ Check the
 ```
 
 ```
-npm run test -- --project=_template
-npm run validate -- --project=yearn
+yarn run test -- --project=_template
+yarn run validate -- --project=yearn
 ```
 
 The `test` command will run a project adapter once for the latest hourly point, perform some basic checks on it's output, and log the result.
@@ -222,7 +222,7 @@ In the above example, the output is saved to `output/_template/tvl/2020-04-16T17
 
 ```json
 {
-  "ethCallCount": 0,
+  "callCount": 0,
   "timestamp": 1587481200,
   "block": 9916481,
   "output": {
@@ -237,13 +237,13 @@ The test will output how many Ethereum network calls were used for the run, conf
 You can also provide an optional timestamp parameter to the test in order to reproduce and troubleshoot previous results:
 
 ```
-npm run test -- --project=_template --timestamp=1581026400
+yarn run test -- --project=_template --timestamp=1581026400
 ```
 
 When you think your project is ready, the `validate` command can be used to do a final more thorough check. This command runs the adapter through a series of points spread over it's lifespan, and also checks that valid metadata is exported by the adapter as well.
 
 ```
-npm run validate -- --project=_template
+yarn run validate -- --project=_template
 ```
 
 ```

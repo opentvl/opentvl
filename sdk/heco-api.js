@@ -1,51 +1,51 @@
 const Eth = require("web3-eth");
 const Etherscan = require("./lib/etherscan");
 const Bottleneck = require("bottleneck");
-const BEP20 = require("./abis/erc20.json");
-const tokenList = require("./data/bscTokenLists.json");
+const HRC20 = require("./abis/erc20.json");
+const tokenList = require("./data/hecoTokenLists.json");
 const { getBalance, getBalances, getLogs, singleCall, multiCall } = require("./lib/web3");
-const debug = require("debug")("opentvl:bsc-api");
+const debug = require("debug")("opentvl:heco-api");
 const { applyDecimals } = require("./lib/big-number");
 const { getReservedBalances } = require("./lib/swap");
 
-if (!process.env.BSC_RPC_URL) {
-  throw new Error(`Please set environment variable BSC_RPC_URL`);
+if (!process.env.HECO_RPC_URL) {
+  throw new Error(`Please set environment variable HECO_RPC_URL`);
 }
 
-if (!process.env.BSC_SCAN_KEY) {
-  throw new Error(`Please set environment variable BSC_SCAN_KEY`);
+if (!process.env.HECO_SCAN_KEY) {
+  throw new Error(`Please set environment variable HECO_SCAN_KEY`);
 }
 
-const BSC_RPC_URL = process.env.BSC_RPC_URL;
-const BSC_SCAN_KEY = process.env.BSC_SCAN_KEY;
+const HECO_RPC_URL = process.env.HECO_RPC_URL;
+const HECO_SCAN_KEY = process.env.HECO_SCAN_KEY;
 
-const BSC_WEB3 = new Eth(BSC_RPC_URL);
-const BSC_SCAN = new Etherscan(BSC_SCAN_KEY, "https://api.bscscan.com/api");
-const BSC_LIMITER = new Bottleneck({ maxConcurrent: 10, minTime: 50 });
-const BSC_MULTICALL_PROVIDER = "0xe7144e57d832c9005D252f415d205b4b8D78228e";
-const BSC_GET_LOGS_BATCH_SIZE = 5000;
+const HECO_WEB3 = new Eth(HECO_RPC_URL);
+const HECO_SCAN = new Etherscan(HECO_SCAN_KEY, "https://api.hecoinfo.com/api");
+const HECO_LIMITER = new Bottleneck({ maxConcurrent: 10, minTime: 50 });
+const HECO_MULTICALL_PROVIDER = "0xe7144e57d832c9005d252f415d205b4b8d78228e";
+const HECO_GET_LOGS_BATCH_SIZE = 5000;
 
 const NATIVE_TOKEN_ADDRESS = "0x0000000000000000000000000000000000000000";
-const NATIVE_TOKEN_SYMBOL = "BNB";
+const NATIVE_TOKEN_SYMBOL = "HT";
 const NATIVE_TOKEN_DECIMALS = 18;
 
 function mapStringToABI(abiString) {
   let abi;
   switch (abiString) {
-    case "bep20:symbol": {
-      abi = BEP20.filter(t => t.name === "symbol")[0];
+    case "hrc20:symbol": {
+      abi = HRC20.filter(t => t.name === "symbol")[0];
       break;
     }
-    case "bep20:decimals": {
-      abi = BEP20.filter(t => t.name === "decimals")[0];
+    case "hrc20:decimals": {
+      abi = HRC20.filter(t => t.name === "decimals")[0];
       break;
     }
-    case "bep20:balanceOf": {
-      abi = BEP20.filter(t => t.name === "balanceOf")[0];
+    case "hrc20:balanceOf": {
+      abi = HRC20.filter(t => t.name === "balanceOf")[0];
       break;
     }
-    case "bep20:totalSupply": {
-      abi = BEP20.filter(t => t.name === "totalSupply")[0];
+    case "hrc20:totalSupply": {
+      abi = HRC20.filter(t => t.name === "totalSupply")[0];
       break;
     }
     default:
@@ -54,12 +54,12 @@ function mapStringToABI(abiString) {
   return abi;
 }
 
-async function bep20(method, target, params = []) {
-  const abi = BEP20.find(item => item.type === "function" && item.name === method);
+async function hrc20(method, target, params = []) {
+  const abi = HRC20.find(item => item.type === "function" && item.name === method);
 
   return singleCall({
-    web3: BSC_WEB3,
-    limiter: BSC_LIMITER,
+    web3: HECO_WEB3,
+    limiter: HECO_LIMITER,
     target,
     abi,
     params
@@ -70,21 +70,21 @@ async function abiCall({ target, abi, block, params }) {
   if (typeof abi === "string") {
     abi = mapStringToABI(abi);
   }
-  debug("bsc.abi.call", { target, abi, block, params });
+  debug("heco.abi.call", { target, abi, block, params });
 
-  return singleCall({ web3: BSC_WEB3, limiter: BSC_LIMITER, target, abi, block, params });
+  return singleCall({ web3: HECO_WEB3, limiter: HECO_LIMITER, target, abi, block, params });
 }
 
 async function abiMultiCall({ target, abi, block, calls }) {
   if (typeof abi === "string") {
     abi = mapStringToABI(abi);
   }
-  debug("bsc.abi.multiCall", { target, abi, block, calls });
+  debug("heco.abi.multiCall", { target, abi, block, calls });
 
   return multiCall({
-    web3: BSC_WEB3,
-    limiter: BSC_LIMITER,
-    multiCallProvider: BSC_MULTICALL_PROVIDER,
+    web3: HECO_WEB3,
+    limiter: HECO_LIMITER,
+    multiCallProvider: HECO_MULTICALL_PROVIDER,
     target,
     abi,
     block,
@@ -93,13 +93,13 @@ async function abiMultiCall({ target, abi, block, calls }) {
 }
 
 async function utilGetLogs({ target, topic, keys, fromBlock, toBlock }) {
-  debug("bsc.util.getLogs", { target, topic, fromBlock, toBlock });
+  debug("heco.util.getLogs", { target, topic, fromBlock, toBlock });
 
   return getLogs({
-    web3: BSC_WEB3,
-    scan: BSC_SCAN,
-    limiter: BSC_LIMITER,
-    batchSize: BSC_GET_LOGS_BATCH_SIZE,
+    web3: HECO_WEB3,
+    scan: HECO_SCAN,
+    limiter: HECO_LIMITER,
+    batchSize: HECO_GET_LOGS_BATCH_SIZE,
     target,
     topic,
     keys,
@@ -109,18 +109,18 @@ async function utilGetLogs({ target, topic, keys, fromBlock, toBlock }) {
 }
 
 async function utilTokenList() {
-  debug("bsc.util.tokenList");
+  debug("heco.util.tokenList");
 
   return tokenList;
 }
 
 async function utilToSymbols(addressesBalances) {
-  debug("bsc.util.toSymbols", addressesBalances);
+  debug("heco.util.toSymbols", addressesBalances);
 
   const normalAddresses = Object.keys(addressesBalances).filter(addr => addr !== NATIVE_TOKEN_ADDRESS);
 
   const symbolsRequests = await abiMultiCall({
-    abi: "bep20:symbol",
+    abi: "hrc20:symbol",
     calls: normalAddresses.map(t => {
       return { target: t };
     })
@@ -140,7 +140,7 @@ async function utilToSymbols(addressesBalances) {
   debug("toSymbols symbolsByAddresses", symbolsByAddresses);
 
   const decimalsRequests = await abiMultiCall({
-    abi: "bep20:decimals",
+    abi: "hrc20:decimals",
     calls: normalAddresses.map(t => {
       return { target: t };
     })
@@ -173,12 +173,12 @@ async function utilToSymbols(addressesBalances) {
   };
 }
 
-async function bnbGetBalance({ target, block, decimals }) {
-  debug("bsc.bnb.getBalance", { target, block, decimals });
+async function htGetBalance({ target, block, decimals }) {
+  debug("heco.ht.getBalance", { target, block, decimals });
 
   let { callCount, output } = await getBalance({
-    web3: BSC_WEB3,
-    limiter: BSC_LIMITER,
+    web3: HECO_WEB3,
+    limiter: HECO_LIMITER,
     target,
     block
   });
@@ -190,12 +190,12 @@ async function bnbGetBalance({ target, block, decimals }) {
   return { callCount, output };
 }
 
-async function bnbGetBalances({ targets, block, decimals }) {
-  debug("bsc.bnb.getBalances", { targets, block, decimals });
+async function htGetBalances({ targets, block, decimals }) {
+  debug("heco.ht.getBalances", { targets, block, decimals });
 
   let { callCount, output } = await getBalances({
-    web3: BSC_WEB3,
-    limiter: BSC_LIMITER,
+    web3: HECO_WEB3,
+    limiter: HECO_LIMITER,
     targets,
     block
   });
@@ -207,11 +207,11 @@ async function bnbGetBalances({ targets, block, decimals }) {
   return { callCount, output };
 }
 
-async function bep20Info(target) {
-  debug("bsc.bep20.info", { target });
+async function hrc20Info(target) {
+  debug("heco.hrc20.info", { target });
 
-  const { callCount: symbolCallCount, output: symbol } = await bep20("symbol", target);
-  const { callCount: decimalsCallCount, output: decimals } = await bep20("decimals", target);
+  const { callCount: symbolCallCount, output: symbol } = await hrc20("symbol", target);
+  const { callCount: decimalsCallCount, output: decimals } = await hrc20("decimals", target);
 
   return {
     callCount: symbolCallCount + decimalsCallCount,
@@ -222,26 +222,26 @@ async function bep20Info(target) {
   };
 }
 
-async function bep20Symbol(target) {
-  debug("bsc.bep20.symbol", { target });
+async function hrc20Symbol(target) {
+  debug("heco.hrc20.symbol", { target });
 
-  return bep20("symbol", target);
+  return hrc20("symbol", target);
 }
 
-async function bep20Decimals(target) {
-  debug("bsc.bep20.decimals", { target });
+async function hrc20Decimals(target) {
+  debug("heco.hrc20.decimals", { target });
 
-  const { callCount: decimalsCallCount, output: decimals } = await bep20("decimals", target);
+  const { callCount: decimalsCallCount, output: decimals } = await hrc20("decimals", target);
   return {
     callCount: decimalsCallCount,
     output: parseInt(decimals)
   };
 }
 
-async function bep20TotalSupply({ target, block, decimals }) {
-  debug("bsc.bep20.totalSupply", { target, block, decimals });
+async function hrc20TotalSupply({ target, block, decimals }) {
+  debug("heco.hrc20.totalSupply", { target, block, decimals });
 
-  let { callCount, output } = await bep20("totalSupply", target);
+  let { callCount, output } = await hrc20("totalSupply", target);
 
   if (decimals) {
     output = applyDecimals(output, decimals);
@@ -250,10 +250,10 @@ async function bep20TotalSupply({ target, block, decimals }) {
   return { callCount, output };
 }
 
-async function bep20BalanceOf({ target, owner, block, decimals }) {
-  debug("bsc.bep20.balanceOf", { target, owner, block, decimals });
+async function hrc20BalanceOf({ target, owner, block, decimals }) {
+  debug("heco.hrc20.balanceOf", { target, owner, block, decimals });
 
-  let { callCount, output } = await bep20("balanceOf", target, [owner]);
+  let { callCount, output } = await hrc20("balanceOf", target, [owner]);
 
   if (decimals) {
     output = applyDecimals(output, decimals);
@@ -280,16 +280,16 @@ module.exports = {
     tokenList: utilTokenList,
     toSymbols: utilToSymbols
   },
-  bnb: {
-    getBalance: bnbGetBalance,
-    getBalances: bnbGetBalances
+  ht: {
+    getBalance: htGetBalance,
+    getBalances: htGetBalances
   },
-  bep20: {
-    info: bep20Info,
-    symbol: bep20Symbol,
-    decimals: bep20Decimals,
-    totalSupply: bep20TotalSupply,
-    balanceOf: bep20BalanceOf
+  hrc20: {
+    info: hrc20Info,
+    symbol: hrc20Symbol,
+    decimals: hrc20Decimals,
+    totalSupply: hrc20TotalSupply,
+    balanceOf: hrc20BalanceOf
   },
   swap: {
     getReservedBalances: swapGetReservedBalances
