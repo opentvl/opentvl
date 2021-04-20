@@ -70,7 +70,7 @@ app.get("/projects/:project", async (req, res) => {
     debug("final result", output);
     debug(`total processing time ${Date.now() - startedAt}ms`);
 
-    res.json(JSON.stringify(output));
+    res.json(output);
   } catch (err) {
     console.log("project processing error", err);
 
