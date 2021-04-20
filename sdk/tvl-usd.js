@@ -5,8 +5,7 @@ const fetch = require('node-fetch');
 const { getPriceFeeds } = require('./lib/chainlink');
 const wait = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
-const BSC_TOKENS = require('./data/bscTokenLists.json');
-const ETH_TOKENS = require('./data/ethTokenLists.json');
+const COIN_GECKO_IDS = require('./data/coinGeckoIDs.json');
 
 let feeds = {};
 getPriceFeeds().then(res => {
@@ -76,6 +75,29 @@ async function convertToUSD(tokens, protocolFeeds, api) {
   );
 }
 
+async function fetchGroupPrices(group) {
+  const groupWithIDs = group.reduce((acc, { symbol, count }) => {
+    const token = COIN_GECKO_IDS
+      .find(({ symbol: other }) => symbol.toUpperCase() === other.toUpperCase());
+
+    if (token?.id) {
+      acc.push({ id: token.id, symbol, count });
+    }
+    return acc;
+  }, [])
+
+  const ids = groupWithIDs.map(({ id }) => id).join(",");
+
+  const priceRes = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`);
+  const priceJSON = await priceRes.json();
+
+  return groupWithIDs.map(({ id, symbol, count}) => {
+    const price = priceJSON[id].usd;
+
+    return { symbol, tvl: count * price, price, count};
+  })
+}
+
 async function fetchCoinGeckoPrices(coinGeckoTokens) {
   const numGroups = Math.ceil(coinGeckoTokens.length / 250);
   const tokenGroups = coinGeckoTokens.reduce((acc, token, i) => {
@@ -88,17 +110,7 @@ async function fetchCoinGeckoPrices(coinGeckoTokens) {
   return (await Promise.all(
     tokenGroups.map(async (group, i) => {
       await wait(600 * i);
-      const ids = group.map(({ id }) => id).join(",");
-
-      const priceRes = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`);
-      const priceJSON = await priceRes.json();
-
-      return Object.keys(priceJSON).map(targetID => {
-        const { symbol, count } = group.find(({ id }) => id === targetID);
-        const price = priceJSON[targetID].usd;
-
-        return { symbol, tvl: count * price, price, count};
-      }, []);
+      return await fetchGroupPrices(group);
     })
   ))
     // Combine results into one object
@@ -112,36 +124,15 @@ async function fetchCoinGeckoPrices(coinGeckoTokens) {
 async function computeTVLUSD(tokenCounts) {
   const { ethTokens, bscTokens, hecoTokens, coinGeckoTokens } = partitionTokens(tokenCounts);
 
-  debug("I get here")
-
   const ethTokenPrices = await convertToUSD(ethTokens, feeds.eth, sdk.eth);
   const bscTokenPrices = await convertToUSD(bscTokens, feeds.bsc, sdk.bsc);
-  //const hecoTokenPrices = await convertToUSD(hecoTokens, feeds.heco, sdk.heco);
+  const hecoTokenPrices = await convertToUSD(hecoTokens, feeds.heco, sdk.heco);
   const coinGeckoPrices = await fetchCoinGeckoPrices(coinGeckoTokens);
 
-  console.log("BSC", bscTokens)
-  console.log("COUNTS", tokenCounts)
-  console.log("ETH", ethTokenPrices)
-
-  const tvl = [...ethTokenPrices, ...bscTokenPrices, ...coinGeckoPrices]
+  const tvl = [...ethTokenPrices, ...bscTokenPrices, ...hecoTokenPrices, ...coinGeckoPrices]
     .reduce((sum, { tvl }) => sum + tvl, 0);
 
   return tvl;
 }
-
-/*function computeTVLUSD(tokenCounts) {
-  const tvlUSD = Object.entries(tokenCounts)
-    .reduce((acc, [ticker, numTokens]) => {
-      const key = ticker.toUpperCase();
-      if (TOKEN_PRICES[key]) {
-        return acc + numTokens * TOKEN_PRICES[key];
-      } else {
-        debug(`unable to find price for: ${ticker}`);
-        return acc;
-      }
-    }, 0);
-
-  return tvlUSD;
-}*/
 
 module.exports = computeTVLUSD;
