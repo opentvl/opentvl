@@ -5,6 +5,7 @@ const express = require("express");
 const { readdir } = require("fs").promises;
 const sdk = require("./sdk");
 const debug = require("debug")("opentvl:server");
+const computeTVLUSD = require("./sdk/tvl-usd");
 
 const app = express();
 const port = 7890;
@@ -40,39 +41,44 @@ app.get("/projects/:project", async (req, res) => {
       return;
     }
 
-    const { tvl, version } = require(`./projects/${project}/index.js`);
-
-    debug("found tvl adapter version", version);
-
-    const ethBlock = await ETH_WEB3.getBlockNumber();
-    const bscBlock = await BSC_WEB3.getBlockNumber();
-
-    let block = {
-      eth: ethBlock,
-      bsc: bscBlock
-    };
-
-    debug("running tvl with block", block);
-
-    if (!version) {
-      // to keep compatibility with old adapters
-      // we introduced a version field
-      // new adapters should expect block to be an object of { eth, bsc }
-      block = ethBlock;
-    }
-
-    let output = await tvl(0, block);
-
-    if (!version) {
-      // to keep compatibility with old adapters
-      // new adapters should handle toSymbols inside the adapters themselves
-      output = (await sdk.eth.util.toSymbols(output)).output;
-    }
+    const output = await fetchTVL(project);
 
     debug("final result", output);
     debug(`total processing time ${Date.now() - startedAt}ms`);
 
     res.json(JSON.stringify(output));
+  } catch (err) {
+    console.log("project processing error", err);
+
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/projects/:project/tvl_by_usd", async (req, res) => {
+  const startedAt = Date.now();
+
+  try {
+    const project = req.params.project;
+
+    debug("received request for project", project);
+
+    if (!(await hasProject(project))) {
+      res.status(400).json(JSON.stringify({ error: `unknown project ${project}` }));
+
+      return;
+    }
+
+    const output = await fetchTVL(project);
+
+    debug("Start tvl compute")
+    const priceStartedAt = Date.now();
+    const tvlUSD = await computeTVLUSD(output);
+
+    debug("final result", tvlUSD);
+    debug(`price processing time ${Date.now() - priceStartedAt}`);
+    debug(`total processing time ${Date.now() - startedAt}ms`);
+
+    res.json(JSON.stringify(tvlUSD));
   } catch (err) {
     console.log("project processing error", err);
 
@@ -87,3 +93,36 @@ app.get("/health", async (req, res) => {
 app.listen(port, () => {
   console.log(`TVL Server listening at http://localhost:${port}`);
 });
+
+async function fetchTVL(project) {
+  const { tvl, version } = require(`./projects/${project}/index.js`);
+
+  debug("found tvl adapter version", version);
+
+  const ethBlock = await ETH_WEB3.getBlockNumber();
+  const bscBlock = await BSC_WEB3.getBlockNumber();
+
+  let block = {
+    eth: ethBlock,
+    bsc: bscBlock
+  };
+
+  debug("running tvl with block", block);
+
+  if (!version) {
+    // to keep compatibility with old adapters
+    // we introduced a version field
+    // new adapters should expect block to be an object of { eth, bsc }
+    block = ethBlock;
+  }
+
+  let output = await tvl(0, block);
+
+  if (!version) {
+    // to keep compatibility with old adapters
+    // new adapters should handle toSymbols inside the adapters themselves
+    output = (await sdk.eth.util.toSymbols(output)).output;
+  }
+  return output;
+}
+

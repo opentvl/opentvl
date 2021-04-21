@@ -8,3 +8,4 @@ csv
 .replit
 serverless.yml
 .serverless
+tokenPrices.json
