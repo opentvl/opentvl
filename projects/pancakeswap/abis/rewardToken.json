@@ -1,0 +1,13 @@
+{
+  "inputs":[],
+  "name":"rewardToken",
+  "outputs":[
+     {
+        "internalType":"contract IBEP20",
+        "name":"",
+        "type":"address"
+     }
+  ],
+  "stateMutability":"view",
+  "type":"function"
+}
