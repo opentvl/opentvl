@@ -1,3 +1,4 @@
+const fetch = require("node-fetch");
 const Eth = require("web3-eth");
 const Etherscan = require("./lib/etherscan");
 const Bottleneck = require("bottleneck");
@@ -6,7 +7,7 @@ const tokenList = require("./data/ethTokenLists.json");
 const { getBalance, getBalances, getLogs, singleCall, multiCall } = require("./lib/web3");
 const debug = require("debug")("opentvl:eth-api");
 const { applyDecimals } = require("./lib/big-number");
-const fetch = require("node-fetch");
+const { getReservedBalances } = require("./lib/swap");
 
 if (!process.env.ETH_RPC_URL) {
   throw new Error(`Please set environment variable ETH_RPC_URL`);
@@ -49,7 +50,7 @@ function mapStringToABI(abiString) {
       break;
     }
     default:
-      throw new Error("Unknown string ABI");
+      throw new Error(`Unknown string ABI: ${abiString}`);
   }
   return abi;
 }
@@ -278,6 +279,14 @@ async function erc20BalanceOf({ target, owner, block, decimals }) {
   return { callCount, output };
 }
 
+async function swapGetReservedBalances(pairAddresses) {
+  return getReservedBalances({
+    pairAddresses,
+    tokenList: await utilTokenList(),
+    multiCall: abiMultiCall
+  });
+}
+
 module.exports = {
   abi: {
     call: abiCall,
@@ -310,5 +319,8 @@ module.exports = {
     decimals: erc20Decimals,
     totalSupply: erc20TotalSupply,
     balanceOf: erc20BalanceOf
+  },
+  swap: {
+    getReservedBalances: swapGetReservedBalances
   }
 };
