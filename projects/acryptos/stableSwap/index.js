@@ -6,7 +6,6 @@ const sdk = require("../../../sdk");
 const _ = require("underscore");
 const BigNumber = require("bignumber.js");
 _.flatMap = _.compose(_.flatten, _.map);
-const debug = require("debug")("opentvl:acryptos:stableswap");
 const abi = require("./abi.json");
 
 /*==================================================
@@ -94,8 +93,6 @@ async function tvl(timestamp, block) {
     }
   }
 
-  debug("raw balances", balances);
-
   // convert acs4 price to busd price
   const acs4Price = (
     await sdk.bsc.abi.call({
@@ -107,8 +104,6 @@ async function tvl(timestamp, block) {
     balances["0x83D69Ef5c9837E21E2389D47d791714F5771F29b"].times(applyDecimals(acs4Price, 18))
   );
   delete balances["0x83D69Ef5c9837E21E2389D47d791714F5771F29b"];
-
-  debug("fixed balances", balances);
 
   return balances;
 }

@@ -1,7 +1,6 @@
 const { tvl: vaultTvl } = require("./vault/");
 const { tvl: stableSwapTvl } = require("./stableSwap");
 const sdk = require("../../sdk");
-const debug = require("debug")("opentvl:acryptos");
 
 // acrytos is a fork of yearn + curve
 async function tvl(timestamp, block) {
@@ -10,7 +9,6 @@ async function tvl(timestamp, block) {
   // calculate tvl in vault (yearn)
   const vaultResult = await vaultTvl(timestamp, block);
   const result = (await sdk.bsc.util.toSymbols(sdk.util.sum([stableSwapResult, vaultResult]))).output;
-  debug(result);
   return result;
 }
 

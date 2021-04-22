@@ -7,7 +7,6 @@ const vaultAbi = require("./vaultAbi");
 const lpAbi = require("./lpAbi");
 const _ = require("underscore");
 const BigNumber = require("bignumber.js");
-const debug = require("debug")("opentvl:acryptos:vault");
 
 /*==================================================
   Settings
@@ -144,7 +143,6 @@ async function tvlInSwapVault(timestamp, block) {
     }
     return acc;
   }, vaultInfos);
-  debug(vaultInfos);
 
   // Get vaults' balance
   const vaultBalanceResults = await sdk.bsc.abi.multiCall({
@@ -158,7 +156,6 @@ async function tvlInSwapVault(timestamp, block) {
     acc[t.input.target].balance = t.success ? t.output : 0;
     return acc;
   }, vaultInfos);
-  debug(vaultInfos);
 
   // Get liquidity pairs' underlying token addresses
   const token0Results = await sdk.bsc.abi.multiCall({
@@ -175,7 +172,6 @@ async function tvlInSwapVault(timestamp, block) {
     }
     return acc;
   }, vaultInfos);
-  debug(vaultInfos);
 
   const token1Results = await sdk.bsc.abi.multiCall({
     calls: _.map(swapVaultAddresses, (address) => ({
@@ -191,7 +187,6 @@ async function tvlInSwapVault(timestamp, block) {
     }
     return acc;
   }, vaultInfos);
-  debug(vaultInfos);
 
   // Get liquidity pairs' reserves
   const lpReservesResults = await sdk.bsc.abi.multiCall({
@@ -209,7 +204,6 @@ async function tvlInSwapVault(timestamp, block) {
     }
     return acc;
   }, vaultInfos);
-  debug(vaultInfos);
 
   // Get liquidity pairs' totalSupply
   const lpTotalSupplyResults = await sdk.bsc.abi.multiCall({
@@ -223,7 +217,6 @@ async function tvlInSwapVault(timestamp, block) {
     acc[lpToVault[t.input.target]].totalSupply = t.output;
     return acc;
   }, vaultInfos);
-  debug(vaultInfos);
 
   // calculate final token balances
   _.each(swapVaultAddresses, (swapVaultAddress) => {
@@ -233,7 +226,6 @@ async function tvlInSwapVault(timestamp, block) {
     balances[token0] = token0Balance.plus(balances[token0]);
     balances[token1] = token1Balance.plus(balances[token1]);
   });
-  debug(balances);
   return balances;
 }
 
