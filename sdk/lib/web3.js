@@ -62,7 +62,7 @@ function groupBlocks(blockIds, batchSize) {
   return groups;
 }
 
-async function getLogs({ web3, scan, limiter, batchSize, target, topic, keys = [], fromBlock, toBlock }) {
+async function getLogs({ web3, scan, limiter, batchSize, target, topic, topics, keys = [], fromBlock, toBlock }) {
   debug("getLogs", target, topic, keys, fromBlock, toBlock);
 
   // assume scattered events can be returned in one page
@@ -96,7 +96,7 @@ async function getLogs({ web3, scan, limiter, batchSize, target, topic, keys = [
         fromBlock,
         toBlock,
         address: target,
-        topics: [utils.sha3(topic)]
+        topics: topics || [utils.sha3(topic)]
       });
 
       debug(`GetPastLogs from block ${fromBlock} to ${toBlock}`);
@@ -114,17 +114,19 @@ async function getLogs({ web3, scan, limiter, batchSize, target, topic, keys = [
   if (keys && keys.length > 0) {
     debug("return with keys", keys);
 
-    return allLogs.map(log => {
-      if (keys.length === 1) {
-        return log[keys[0]];
-      } else {
-        const filteredLog = {};
-        for (const key of keys) {
-          filteredLog[key] = log[key];
+    return {
+      callCount: allLogRequests.length,
+      output: allLogs.map(log => {
+        if (keys.length === 1) {
+          return log[keys[0]];
+        } else {
+          return keys.reduce((acc, key) => {
+            acc[key] = log[key];
+            return acc;
+          }, {});
         }
-        return filteredLog;
-      }
-    });
+      })
+    };
   }
 
   debug("return with no keys");
@@ -185,7 +187,7 @@ async function multiCall({ web3, multiCallProvider, limiter, target, abi, block,
   const rateLimitedCallChunk = limiter.wrap(async callChunk => {
     const txs = callChunk.map(call => ({
       delegateCall: false,
-      revertOnError: true,
+      revertOnError: false,
       gasLimit: 0,
       target: call.target || target,
       value: 0,
@@ -215,7 +217,7 @@ async function multiCall({ web3, multiCallProvider, limiter, target, abi, block,
         return {
           input,
           success: false,
-          output: decodeErr.message
+          output: null
         };
       }
     });

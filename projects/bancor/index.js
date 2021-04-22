@@ -191,7 +191,7 @@
 
     sdk.util.sumMultiBalanceOf(balances, result);
 
-    return (await sdk.api.util.toSymbols(balances)).output;
+    return balances;
   }
 
 /*==================================================

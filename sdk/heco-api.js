@@ -92,8 +92,8 @@ async function abiMultiCall({ target, abi, block, calls }) {
   });
 }
 
-async function utilGetLogs({ target, topic, keys, fromBlock, toBlock }) {
-  debug("heco.util.getLogs", { target, topic, fromBlock, toBlock });
+async function utilGetLogs({ target, topic, topics, keys, fromBlock, toBlock }) {
+  debug("heco.util.getLogs", { target, topic, topics, fromBlock, toBlock });
 
   return getLogs({
     web3: HECO_WEB3,
@@ -102,6 +102,7 @@ async function utilGetLogs({ target, topic, keys, fromBlock, toBlock }) {
     batchSize: HECO_GET_LOGS_BATCH_SIZE,
     target,
     topic,
+    topics,
     keys,
     fromBlock,
     toBlock
