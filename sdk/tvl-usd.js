@@ -167,7 +167,7 @@ async function computeTVLUSD(tokenCounts) {
     BigNumber(0)
   );
 
-  return tvl.toString();
+  return tvl.toNumber();
 }
 
 module.exports = computeTVLUSD;
