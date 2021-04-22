@@ -498,5 +498,50 @@
     "symbol": "BCH",
     "contract": "0x8ff795a6f4d97e7887c79bea79aba5cc76444adf",
     "decimals": "18"
+  },
+  {
+    "symbol": "pBTC",
+    "contract": "0xeD28A457A5A76596ac48d87C0f577020F6Ea1c4C",
+    "decimals": "18"
+  },
+  {
+    "symbol": "WATCH",
+    "contract": "0x7A9f28EB62C791422Aa23CeAE1dA9C847cBeC9b0",
+    "decimals": "18"
+  },
+  {
+    "symbol": "SWINGBY",
+    "contract": "0x71DE20e0C4616E7fcBfDD3f875d568492cBE4739",
+    "decimals": "18"
+  },
+  {
+    "symbol": "ALICE",
+    "contract": "0xAC51066d7bEC65Dc4589368da368b212745d63E8",
+    "decimals": "6"
+  },
+  {
+    "symbol": "TPT",
+    "contract": "0xECa41281c24451168a37211F0bc2b8645AF45092",
+    "decimals": "4"
+  },
+  {
+    "symbol": "MIR",
+    "contract": "0x5B6DcF557E2aBE2323c48445E8CC948910d8c2c9",
+    "decimals": "18"
+  },
+  {
+    "symbol": "SUSHI",
+    "contract": "0x947950BcC74888a40Ffa2593C5798F11Fc9124C4",
+    "decimals": "18"
+  },
+  {
+    "symbol": "UNFI",
+    "contract": "0x728C5baC3C3e370E372Fc4671f9ef6916b814d8B",
+    "decimals": "18"
+  },
+  {
+    "symbol": "ACSI",
+    "contract": "0x5b17b4d5e4009B5C43e3e3d63A5229F794cBA389",
+    "decimals": "18"
   }
 ]

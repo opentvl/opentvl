@@ -1,15 +1,30 @@
 {
   "pool_list": {
     "name": "pool_list",
-    "outputs": [{ "type": "address", "name": "" }],
-    "inputs": [{ "type": "uint256", "name": "arg0" }],
+    "outputs": [
+      {
+        "type": "address",
+        "name": ""
+      }
+    ],
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "arg0"
+      }
+    ],
     "stateMutability": "view",
     "type": "function",
     "gas": 2280
   },
   "pool_count": {
     "name": "pool_count",
-    "outputs": [{ "type": "uint256", "name": "" }],
+    "outputs": [
+      {
+        "type": "uint256",
+        "name": ""
+      }
+    ],
     "inputs": [],
     "stateMutability": "view",
     "type": "function",
@@ -18,16 +33,16 @@
   "coins128": {
     "name": "coins",
     "outputs": [
-     {
-      "type": "address",
-      "name": "out"
-     }
+      {
+        "type": "address",
+        "name": "out"
+      }
     ],
     "inputs": [
-     {
-      "type": "int128",
-      "name": "arg0"
-     }
+      {
+        "type": "int128",
+        "name": "arg0"
+      }
     ],
     "constant": true,
     "payable": false,
@@ -37,16 +52,16 @@
   "coins256": {
     "name": "coins",
     "outputs": [
-     {
-      "type": "address",
-      "name": "out"
-     }
+      {
+        "type": "address",
+        "name": "out"
+      }
     ],
     "inputs": [
-     {
-      "type": "uint256",
-      "name": "arg0"
-     }
+      {
+        "type": "uint256",
+        "name": "arg0"
+      }
     ],
     "constant": true,
     "payable": false,
@@ -56,16 +71,16 @@
   "balances128": {
     "name": "balances",
     "outputs": [
-     {
-      "type": "uint256",
-      "name": "out"
-     }
+      {
+        "type": "uint256",
+        "name": "out"
+      }
     ],
     "inputs": [
-     {
-      "type": "int128",
-      "name": "arg0"
-     }
+      {
+        "type": "int128",
+        "name": "arg0"
+      }
     ],
     "constant": true,
     "payable": false,
@@ -75,16 +90,16 @@
   "balances256": {
     "name": "balances",
     "outputs": [
-     {
-      "type": "uint256",
-      "name": "out"
-     }
+      {
+        "type": "uint256",
+        "name": "out"
+      }
     ],
     "inputs": [
-     {
-      "type": "uint256",
-      "name": "arg0"
-     }
+      {
+        "type": "uint256",
+        "name": "arg0"
+      }
     ],
     "constant": true,
     "payable": false,
@@ -93,9 +108,27 @@
   },
   "get_registry": {
     "name": "get_registry",
-    "outputs": [{ "type": "address", "name": "" }],
+    "outputs": [
+      {
+        "type": "address",
+        "name": ""
+      }
+    ],
     "inputs": [],
     "stateMutability": "view",
     "type": "function"
+  },
+  "get_virtual_price": {
+    "name": "get_virtual_price",
+    "outputs": [
+      {
+        "type": "uint256",
+        "name": ""
+      }
+    ],
+    "inputs": [],
+    "stateMutability": "view",
+    "type": "function",
+    "gas": 1346183
   }
 }

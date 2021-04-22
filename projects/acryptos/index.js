@@ -6,12 +6,12 @@ const debug = require("debug")("opentvl:acryptos");
 // acrytos is a fork of yearn + curve
 async function tvl(timestamp, block) {
   // calculate tvl in stableswap (curve)
-  // const stableSwapResult = await sdk.bsc.util.toSymbols(await stableSwapTvl(timestamp, block));
-  // return stableSwapResult;
+  const stableSwapResult = await stableSwapTvl(timestamp, block);
   // calculate tvl in vault (yearn)
-  const vaultResult = await sdk.bsc.util.toSymbols(await vaultTvl(timestamp, block));
-  debug(vaultResult);
-  return vaultResult;
+  const vaultResult = await vaultTvl(timestamp, block);
+  const result = (await sdk.bsc.util.toSymbols(sdk.util.sum([stableSwapResult, vaultResult]))).output;
+  debug(result);
+  return result;
 }
 
 module.exports = {

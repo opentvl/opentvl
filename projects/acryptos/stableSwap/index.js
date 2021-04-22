@@ -6,18 +6,18 @@ const sdk = require("../../../sdk");
 const _ = require("underscore");
 const BigNumber = require("bignumber.js");
 _.flatMap = _.compose(_.flatten, _.map);
-
+const debug = require("debug")("opentvl:acryptos:stableswap");
 const abi = require("./abi.json");
-
-/*==================================================
-  Constants
-  ==================================================*/
-const BNBAddress = "0x0000000000000000000000000000000000000000";
-const nativeBNBAddress = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
 
 /*==================================================
   TVL
   ==================================================*/
+
+function applyDecimals(bigNumber, decimals) {
+  const dividend = new BigNumber(10).exponentiatedBy(new BigNumber(decimals));
+
+  return new BigNumber(bigNumber).dividedBy(dividend).toString();
+}
 
 async function tvl(timestamp, block) {
   let curvePools = [
@@ -28,7 +28,6 @@ async function tvl(timestamp, block) {
     "0xbE7CAa236544d1B9A0E7F91e94B9f5Bfd3B5ca81", // ACS3BTC StableSwap
   ];
   let balances = {};
-  balances[nativeBNBAddress] = 0;
   let poolInfo = {};
 
   let poolCount = curvePools.length;
@@ -95,11 +94,21 @@ async function tvl(timestamp, block) {
     }
   }
 
-  balances[BNBAddress] = balances[nativeBNBAddress];
-  delete balances[nativeBNBAddress];
+  debug("raw balances", balances);
 
-  // remove duplicate ACS4USD
+  // convert acs4 price to busd price
+  const acs4Price = (
+    await sdk.bsc.abi.call({
+      target: "0xb3F0C9ea1F05e312093Fdb031E789A756659B0AC", // ACS4USD StableSwap
+      abi: abi["get_virtual_price"],
+    })
+  ).output;
+  balances["0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56"] = balances["0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56"].plus(
+    balances["0x83D69Ef5c9837E21E2389D47d791714F5771F29b"].times(applyDecimals(acs4Price, 18))
+  );
   delete balances["0x83D69Ef5c9837E21E2389D47d791714F5771F29b"];
+
+  debug("fixed balances", balances);
 
   return balances;
 }
