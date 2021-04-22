@@ -2,7 +2,7 @@
 
 Open TVL definitions for DeFi projects with multiple chain support
 
-![Docker Build Status](https://img.shields.io/docker/build/opentvl/server)
+![Docker Build Status](https://img.shields.io/docker/cloud/build/opentvl/server)
 
 ## Why OpenTVL
 
