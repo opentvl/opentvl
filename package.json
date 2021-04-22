@@ -3,16 +3,18 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "nodemon --exec 'DEBUG=opentvl:* node server.js' -e 'js yml json'",
+    "dev": "nodemon --exec 'cross-env DEBUG=opentvl:* node server.js' -e 'js yml json'",
     "start": "node server.js",
     "test": "jest --forceExit test/handler.spec.js",
     "test:bsc": "jest --forceExit bscapi",
     "deploy": "serverless deploy"
   },
   "dependencies": {
+    "argparse": "^2.0.1",
     "axios": "^0.21.1",
     "bignumber.js": "^9.0.1",
     "bottleneck": "^2.19.5",
+    "cross-env": "^7.0.3",
     "debug": "^4.3.1",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",

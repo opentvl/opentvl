@@ -24,7 +24,7 @@ const ETH_WEB3 = new Eth(process.env.ETH_RPC_URL);
 async function hasProject(project) {
   const projectNames = await readdir("projects");
 
-  return projectNames.some(name => name === project);
+  return projectNames.some((name) => name === project);
 }
 
 app.get("/projects/:project", async (req, res) => {
@@ -104,7 +104,7 @@ async function fetchTVL(project) {
 
   let block = {
     eth: ethBlock,
-    bsc: bscBlock
+    bsc: bscBlock,
   };
 
   debug("running tvl with block", block);
