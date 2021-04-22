@@ -22,7 +22,7 @@ async function getJoins(block) {
             topics: [relyTopic],
           })
       ).output;
-  
+
     let auths = logs.map(auth => {
       return `0x${auth.topics[1].substr(26)}`;
     });

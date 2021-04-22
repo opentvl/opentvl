@@ -78,7 +78,7 @@ app.get("/projects/:project/tvl_by_usd", async (req, res) => {
     debug(`price processing time ${Date.now() - priceStartedAt}`);
     debug(`total processing time ${Date.now() - startedAt}ms`);
 
-    res.json(tvlUSD);
+    res.json({ USD: tvlUSD });
   } catch (err) {
     console.log("project processing error", err);
 
@@ -121,7 +121,17 @@ async function fetchTVL(project) {
   if (!version) {
     // to keep compatibility with old adapters
     // new adapters should handle toSymbols inside the adapters themselves
+
+    // some old adapters returns upper case addresses
+    output = Object.keys(output).reduce((acc, addr) => {
+      acc[addr.toLowerCase()] = output[addr];
+      return acc;
+    }, {});
+
     output = (await sdk.eth.util.toSymbols(output)).output;
   }
+
+  debug("found tvl in symbols", output);
+
   return output;
 }

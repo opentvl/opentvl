@@ -7,6 +7,9 @@ const { applyDecimals } = require("./lib/big-number");
 const BigNumber = require("bignumber.js");
 const wait = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
+const DECIMALS_ABI = abi[0];
+const LATEST_ROUND_DATA_ABI = abi[3];
+
 const COIN_GECKO_IDS = require("./data/coinGeckoIDs.json");
 
 let feeds = {};
@@ -30,6 +33,8 @@ function normalizeSymbol(symbol) {
     case "HDOT":
     case "DOT":
       return "DOT";
+    case "UNI-V2":
+      return "UNI";
     default:
       return formatted;
   }
@@ -61,28 +66,35 @@ function partitionTokens(tokenCounts) {
 }
 
 async function convertToUSD(tokens, protocolFeeds, api) {
-  return await Promise.all(
-    tokens.map(async ({ symbol, count }) => {
-      let currentToken = symbol;
-      let currentValue = BigNumber(count);
-
-      while (currentToken !== "USD") {
-        const { target: targetToken, contract } = protocolFeeds[currentToken];
-        const { output: decimals } = await api.abi.call({
-          target: contract,
-          abi: abi[0],
-          block: undefined,
-          params: [],
-        });
-        const { output } = await api.abi.call({ target: contract, abi: abi[3], block: undefined, params: [] });
-        const { answer } = output;
-        currentValue = currentValue.times(applyDecimals(answer, decimals));
-        currentToken = targetToken;
-      }
-
-      return { symbol, tvl: currentValue, price: currentValue.div(count), count };
+  const decimalsData = (
+    await api.abi.multiCall({
+      abi: DECIMALS_ABI,
+      calls: tokens.map(({ symbol }) => ({ target: protocolFeeds[symbol].contract })),
     })
-  );
+  ).output;
+
+  const priceData = (
+    await api.abi.multiCall({
+      abi: LATEST_ROUND_DATA_ABI,
+      calls: tokens.map(({ symbol }) => ({ target: protocolFeeds[symbol].contract })),
+    })
+  ).output;
+
+  return tokens.map(({ symbol, count }, idx) => {
+    let currentToken = symbol;
+    let currentValue = BigNumber(count);
+
+    while (currentToken !== "USD") {
+      const { target: targetToken } = protocolFeeds[currentToken];
+
+      const decimals = BigNumber(decimalsData[idx].output);
+      const { answer } = priceData[idx].output;
+      currentValue = currentValue.times(applyDecimals(answer, decimals));
+      currentToken = targetToken;
+    }
+
+    return { symbol, tvl: currentValue, price: currentValue / count, count };
+  });
 }
 
 async function fetchGroupPrices(group) {
@@ -103,7 +115,7 @@ async function fetchGroupPrices(group) {
   return groupWithIDs.map(({ id, symbol, count }) => {
     const price = priceJSON[id].usd;
 
-    return { symbol, tvl: count * price, price, count };
+    return { symbol, tvl: price ? count * price : 0, price, count };
   });
 }
 
@@ -139,19 +151,16 @@ async function fetchCoinGeckoPrices(coinGeckoTokens) {
 // products together to get tvl in USD
 async function computeTVLUSD(tokenCounts) {
   const { ethTokens, bscTokens, hecoTokens, coinGeckoTokens } = partitionTokens(tokenCounts);
-  debug("ethTokens", ethTokens);
-  debug("bscTokens", bscTokens);
-  debug("hecoTokens", hecoTokens);
-  debug("coinGeckoTokens", coinGeckoTokens);
 
   const ethTokenPrices = await convertToUSD(ethTokens, feeds.eth, sdk.eth);
   const bscTokenPrices = await convertToUSD(bscTokens, feeds.bsc, sdk.bsc);
   const hecoTokenPrices = await convertToUSD(hecoTokens, feeds.heco, sdk.heco);
   const coinGeckoPrices = await fetchCoinGeckoPrices(coinGeckoTokens);
-  debug("ethTokenPrices", ethTokenPrices);
-  debug("bscTokenPrices", bscTokenPrices);
-  debug("hecoTokenPrices", hecoTokenPrices);
-  debug("coinGeckoPrices", coinGeckoPrices);
+
+  debug("ethTokenPrices", ethTokens, ethTokenPrices);
+  debug("bscTokenPrices", bscTokens, bscTokenPrices);
+  debug("hecoTokenPrices", hecoTokens, hecoTokenPrices);
+  debug("coinGeckoPrices", coinGeckoTokens, coinGeckoPrices);
 
   const tvl = [...ethTokenPrices, ...bscTokenPrices, ...hecoTokenPrices, ...coinGeckoPrices].reduce(
     (sum, { tvl }) => sum.plus(tvl),
