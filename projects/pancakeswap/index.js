@@ -5,6 +5,9 @@ const BigNumber = require('bignumber.js');
 const REWARD_TOKEN = require('./abis/rewardToken.json');
 const CAKE = '0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82';
 
+const START_BLOCK = 586851;
+const FACTORY = '0xbcfccbde45ce874adcb698cc183debcf17952812';
+
 async function fetchPairAddresses() {
   const result = await (
     await fetch('https://api.pancakeswap.finance/api/v1/stat')
@@ -58,7 +61,7 @@ async function getPoolRewards(block) {
 async function getPoolDeposits(block) {
   const balances = (await sdk.bsc.abi.multiCall({
     target: CAKE,
-    abi: BALANCE_OF,
+    abi: "bep20:balanceOf",
     block,
     calls: SYRUP_POOLS.map(address => ({ params: address }))
   })).output;
@@ -105,7 +108,8 @@ function combineBalances(b1, b2) {
 }
 
 async function tvl(_, block) {
-  const pairAddresses = await fetchPairAddresses()
+  const pairAddresses = await fetchPairAddresses();
+  //const pairAddresses = await sdk.bsc.swap.getPairAddresses(FACTORY, START_BLOCK, block.bsc);
 
   const poolBalances = await getPoolBalances(block);
   const reserveBalances = await sdk.bsc.swap.getReservedBalances(pairAddresses);
@@ -231,30 +235,3 @@ const SYRUP_POOLS = [
   "0xe7f9A439Aa7292719aC817798DDd1c4D35934aAF",
   "0xcec2671C81a0Ecf7F8Ee796EFa6DBDc5Cb062693"
 ];
-
-// const START_BLOCK = 586851
-// const FACTORY = '0xbcfccbde45ce874adcb698cc183debcf17952812'
-
-/*async function getPairAddresses() {
-  const logs = (
-    await sdk.bsc.util.getLogs({
-      keys: [],
-      toBlock: block.bsc,
-      target: FACTORY,
-      fromBlock: START_BLOCK,
-      topic: 'PairCreated(address,address,address,uint256)'
-    })
-  ).output
-
-  const pairAddresses = logs
-    // sometimes the full log is emitted
-    .map(log =>
-      typeof log === 'string' ? log : `0x${log.data.slice(64 - 40 + 2, 64 + 2)}`
-    )
-    // lowercase
-    .map(pairAddress => pairAddress.toLowerCase())
-
-  fs.writeFileSync('./pairAddresses.json', JSON.stringify(pairAddresses))
-
-  return pairAddresses;
-}*/

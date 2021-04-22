@@ -80,7 +80,7 @@ app.get("/projects/:project/tvl_by_usd", async (req, res) => {
 
     res.json({ USD: tvlUSD });
   } catch (err) {
-    console.log("project processing error", err);
+    console.log("project processing error:", err);
 
     res.status(500).json({ error: err.message });
   }

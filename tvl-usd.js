@@ -1,3 +1,4 @@
+const BigNumber = require('bignumber.js');
 const Bottleneck = require("bottleneck");
 const sdk = require("./sdk");
 const fetch = require("node-fetch");
