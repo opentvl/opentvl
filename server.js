@@ -46,7 +46,7 @@ app.get("/projects/:project", async (req, res) => {
     debug("final result", output);
     debug(`total processing time ${Date.now() - startedAt}ms`);
 
-    res.json(JSON.stringify(output));
+    res.json(output);
   } catch (err) {
     console.log("project processing error", err);
 
@@ -70,7 +70,7 @@ app.get("/projects/:project/tvl_by_usd", async (req, res) => {
 
     const output = await fetchTVL(project);
 
-    debug("Start tvl compute")
+    debug("Start tvl compute");
     const priceStartedAt = Date.now();
     const tvlUSD = await computeTVLUSD(output);
 
@@ -78,7 +78,7 @@ app.get("/projects/:project/tvl_by_usd", async (req, res) => {
     debug(`price processing time ${Date.now() - priceStartedAt}`);
     debug(`total processing time ${Date.now() - startedAt}ms`);
 
-    res.json(JSON.stringify(tvlUSD));
+    res.json({ USD: tvlUSD });
   } catch (err) {
     console.log("project processing error", err);
 
@@ -123,6 +123,6 @@ async function fetchTVL(project) {
     // new adapters should handle toSymbols inside the adapters themselves
     output = (await sdk.eth.util.toSymbols(output)).output;
   }
+
   return output;
 }
-
