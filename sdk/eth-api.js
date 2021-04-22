@@ -3,11 +3,13 @@ const Eth = require("web3-eth");
 const Etherscan = require("./lib/etherscan");
 const Bottleneck = require("bottleneck");
 const ERC20 = require("./abis/erc20.json");
+const feedList = require("./data/ethChainlinkFeeds.json");
 const tokenList = require("./data/ethTokenLists.json");
 const { getBalance, getBalances, getLogs, singleCall, multiCall } = require("./lib/web3");
 const debug = require("debug")("opentvl:eth-api");
 const { applyDecimals } = require("./lib/big-number");
 const { getReservedBalances } = require("./lib/swap");
+const { getSupportedTokens, getUSDPrices } = require("./lib/chainlink");
 
 if (!process.env.ETH_RPC_URL) {
   throw new Error(`Please set environment variable ETH_RPC_URL`);
@@ -288,6 +290,14 @@ async function swapGetReservedBalances(pairAddresses) {
   });
 }
 
+function chainlinkGetSupportedTokens() {
+  return getSupportedTokens({ feedList });
+}
+
+async function chainlinkGetUSDPrices(tokens) {
+  return getUSDPrices({ tokens, feedList, multiCall: abiMultiCall });
+}
+
 module.exports = {
   abi: {
     call: abiCall,
@@ -323,5 +333,9 @@ module.exports = {
   },
   swap: {
     getReservedBalances: swapGetReservedBalances
+  },
+  chainlink: {
+    getSupportedTokens: chainlinkGetSupportedTokens,
+    getUSDPrices: chainlinkGetUSDPrices
   }
 };

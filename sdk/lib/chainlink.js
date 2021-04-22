@@ -1,44 +1,59 @@
-const fetch = require("node-fetch");
-const { parse } = require('node-html-parser');
+const LATEST_ROUND_DATA_ABI = require('../abis/latestRoundData.json');
 
-async function getFeedsForURL(url) {
-  const html = await (await fetch(url)).text();
+function getSupportedTokens({ feedList }) {
+  return Object.keys(feedList);
+}
 
-  const root = parse(html);
-  const table = root.querySelector('table');
-  const tableRows = table.querySelectorAll('tr');
+async function getPrices({ symbols, feedList, multiCall }) {
+  const prices = (
+    await multiCall({
+      abi: LATEST_ROUND_DATA_ABI,
+      calls: symbols.map(symbol => ({ target: feedList[symbol].contract }))
+    })
+  ).output;
 
-  const feedAddresses = tableRows.reduce((acc, row) => {
-    const [pair, decimals, proxy] = row.querySelectorAll('td').map(el => el.innerText);
-
-    if (!pair) {
-      return acc;
+  return prices.reduce((acc, res, idx) => {
+    if (res.success) {
+      const symbol = symbols[idx];
+      const { decimals } = feedList[symbol];
+      acc[symbol] = parseInt(res.output.answer, 10) / (10 ** parseInt(decimals, 10));
     }
-
-    const [symbol, target] = pair.split(' / ');
-    const formattedSymbol = symbol;
-    if (!acc[formattedSymbol] || target === 'USD') {
-      acc[formattedSymbol] = { target, contract: proxy };
-    } 
 
     return acc;
   }, {});
-
-  return feedAddresses;
 }
 
-async function getPriceFeeds() {
-  const ETH_URL = 'https://docs.chain.link/docs/ethereum-addresses';
-  const BSC_URL = 'https://docs.chain.link/docs/binance-smart-chain-addresses';
-  const HECO_URL = 'https://docs.chain.link/docs/huobi-eco-chain-price-feeds';
+async function getUSDPrices({ tokens, feedList, multiCall }) {
+  // Ensure that we have intermediary token prices, i.e CAKE -> BNB -> USD
+  const tokenSymbols = tokens.reduce((acc, { symbol }) => {
+    const { target } = feedList[symbol];
 
-  const ethFeeds = await getFeedsForURL(ETH_URL);
-  const bscFeeds = await getFeedsForURL(BSC_URL);
-  const hecoFeeds = await getFeedsForURL(HECO_URL);
+    acc.add(symbol);
 
-  return { eth: ethFeeds, bsc: bscFeeds, heco: hecoFeeds }
+    if (target !== 'USD') {
+      acc.add(target);
+    }
+
+    return acc;
+  }, new Set());
+
+  const prices = await getPrices({ symbols: [...tokenSymbols], feedList, multiCall });
+
+  return tokens.map(({ symbol, count }) => {
+    let currentToken = symbol;
+    let currentValue = count;
+
+    while (currentToken !== "USD") {
+      const { target: targetToken } = feedList[currentToken];
+      currentValue *= prices[currentToken];
+      currentToken = targetToken;
+    }
+
+    return { symbol, tvl: currentValue, price: currentValue / count, count };
+  });
 }
 
 module.exports = {
-  getPriceFeeds
-}
+  getSupportedTokens,
+  getUSDPrices
+};

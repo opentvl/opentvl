@@ -5,7 +5,7 @@ const express = require("express");
 const { readdir } = require("fs").promises;
 const sdk = require("./sdk");
 const debug = require("debug")("opentvl:server");
-const computeTVLUSD = require("./sdk/tvl-usd");
+const computeTVLUSD = require("./tvl-usd");
 
 const app = express();
 const port = 7890;
