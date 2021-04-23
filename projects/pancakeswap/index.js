@@ -5,8 +5,8 @@ const BigNumber = require('bignumber.js');
 const REWARD_TOKEN = require('./abis/rewardToken.json');
 const CAKE = '0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82';
 
-//const START_BLOCK = 586851;
-//const FACTORY = '0xbcfccbde45ce874adcb698cc183debcf17952812';
+const START_BLOCK = 586851;
+const FACTORY = '0xbcfccbde45ce874adcb698cc183debcf17952812';
 
 async function fetchPairAddresses() {
   const result = await (
@@ -116,7 +116,7 @@ async function tvl(_, block) {
 
   const balances = combineBalances(poolBalances, reserveBalances);
 
-  return (await sdk.bsc.util.toSymbols(balances)).output
+  return (await sdk.bsc.util.toSymbols(balances)).output;
 }
 
 module.exports = {
@@ -128,9 +128,12 @@ module.exports = {
   tvl
 }
 
-// Last fetched Apr-20-2020
+// Last fetched Apr-23-2021
 const SYRUP_POOLS = [
   "0x73feaa1eE314F8c655E354234017bE2193C9E24E",
+  "0xaac7171afc93f4b75e1268d208040b152ac65e32",
+  "0x2c6017269b4324d016ca5d8e3267368652c18905",
+  "0x675434c68f2672c983e36cf10ed13a4014720b79",
   "0x05d6c2d1d687eacfb5e6440d5a3511e91f2201a8",
   "0xd623a32da4a632ce01766c317d07cb2cad56949b",
   "0xdf75f38dbc98f9f26377414e567abcb8d57cca33",

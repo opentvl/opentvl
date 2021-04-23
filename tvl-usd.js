@@ -110,10 +110,9 @@ async function computeTVLUSD(tokenCounts) {
   const hecoTokenPrices = await sdk.heco.chainlink.getUSDPrices(hecoTokens);
   const coinGeckoPrices = await fetchCoinGeckoPrices(coinGeckoTokens);
 
-  const tvl = [...ethTokenPrices, ...bscTokenPrices, ...hecoTokenPrices, ...coinGeckoPrices].reduce(
-    (sum, { tvl }) => sum.plus(tvl),
-    BigNumber(0)
-  );
+  const prices = [...ethTokenPrices, ...bscTokenPrices, ...hecoTokenPrices, ...coinGeckoPrices];
+
+  const tvl = prices.reduce((sum, { tvl }) => sum.plus(tvl), BigNumber(0));
 
   return tvl.toNumber();
 }
