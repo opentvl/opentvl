@@ -1,0 +1,202 @@
+{
+  "ADA": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0xa767f745331D267c7751297D982b050c93985627"
+  },
+  "ALPHA": {
+    "target": "BNB",
+    "decimals": "18",
+    "contract": "0x7bC032A7C19B1BdCb981D892854d090cfB0f238E"
+  },
+  "ATOM": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0xb056B7C804297279A9a673289264c17E6Dc6055d"
+  },
+  "BAND": {
+    "target": "BNB",
+    "decimals": "18",
+    "contract": "0x3334bF7ec892Ca03D1378B51769b7782EAF318C4"
+  },
+  "BCH": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0x43d80f616DAf0b0B42a928EeD32147dC59027D41"
+  },
+  "BNB": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0x0567F2323251f0Aab15c8dFb1967E4e8A7D42aeE"
+  },
+  "BTC": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0x264990fbd0A4796A3E3d8E37C4d5F87a3aCa5Ebf"
+  },
+  "BUSD": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0xcBb98864Ef56E9042e7d2efef76141f15731B82f"
+  },
+  "BZRX": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0xFc362828930519f236ad0c8f126B7996562a695A"
+  },
+  "CAKE": {
+    "target": "BNB",
+    "decimals": "18",
+    "contract": "0xcB23da9EA243f53194CBc2380A6d4d9bC046161f"
+  },
+  "CREAM": {
+    "target": "BNB",
+    "decimals": "18",
+    "contract": "0x6f55DFAf098a813d87BB4e6392275b502360Bb9D"
+  },
+  "DAI": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0x132d3C0B1D2cEa0BC552588063bdBb210FDeecfA"
+  },
+  "DF": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0x1b816F5E122eFa230300126F97C018716c4e47F5"
+  },
+  "DOT": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0xC333eb0086309a16aa7c8308DfD32c8BBA0a2592"
+  },
+  "EOS": {
+    "target": "BNB",
+    "decimals": "18",
+    "contract": "0xed93F3764334788f2f6628b30e505fe1fc5d1D7b"
+  },
+  "ETH": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0x9ef1B8c0E4F7dc8bF5719Ea496883DC6401d5b2e"
+  },
+  "EUR": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0x0bf79F617988C472DcA68ff41eFe1338955b9A80"
+  },
+  "FIL": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0xE5dbFD9003bFf9dF5feB2f4F445Ca00fb121fb83"
+  },
+  "JPY": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0x22Db8397a6E77E41471dE256a7803829fDC8bC57"
+  },
+  "LINA": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0x38393201952f2764E04B290af9df427217D56B41"
+  },
+  "LINK": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0xca236E327F629f9Fc2c30A4E95775EbF0B89fac8"
+  },
+  "LTC": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0x74E72F37A8c415c8f1a98Ed42E78Ff997435791D"
+  },
+  "PAXG": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0x7F8caD4690A38aC28BDA3D132eF83DB1C17557Df"
+  },
+  "RAMP": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0xD1225da5FC21d17CaE526ee4b6464787c6A71b4C"
+  },
+  "SXP": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0xE188A9875af525d25334d75F3327863B2b8cd0F1"
+  },
+  "TRX": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0xF4C5e535756D11994fCBB12Ba8adD0192D9b88be"
+  },
+  "TWT": {
+    "target": "BNB",
+    "decimals": "18",
+    "contract": "0x7E728dFA6bCa9023d9aBeE759fDF56BEAb8aC7aD"
+  },
+  "UNI": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0xb57f259E7C24e56a1dA00F66b55A5640d9f9E7e4"
+  },
+  "USDC": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0x51597f405303C4377E36123cBc172b13269EA163"
+  },
+  "USDT": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0xB97Ad0E74fa7d920791E90258A6E2085088b4320"
+  },
+  "VAI": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0x058316f8Bb13aCD442ee7A216C7b60CFB4Ea1B53"
+  },
+  "WOO": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0x02Bfe714e78E2Ad1bb1C2beE93eC8dc5423B66d4"
+  },
+  "WTI": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0xb1BED6C1fC1adE2A975F54F24851c7F410e27718"
+  },
+  "XAG": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0x817326922c909b16944817c207562B25C4dF16aD"
+  },
+  "XAU": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0x86896fEB19D8A607c3b11f2aF50A0f239Bd71CD0"
+  },
+  "XRP": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0x93A67D414896A280bF8FFB3b389fE3686E014fda"
+  },
+  "XTZ": {
+    "target": "BNB",
+    "decimals": "18",
+    "contract": "0x8264d6983B219be65C4D62f1c82B3A2999944cF2"
+  },
+  "XVS": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0xBF63F430A79D4036A5900C19818aFf1fa710f206"
+  },
+  "YFI": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0xD7eAa5Bf3013A96e3d515c055Dbd98DbdC8c620D"
+  },
+  "YFII": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0xC94580FAaF145B2FD0ab5215031833c98D3B77E4"
+  }
+}

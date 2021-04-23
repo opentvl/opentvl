@@ -1,0 +1,102 @@
+{
+  "AAVE": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0x8a054991B803F6a6958Ba9695Cc8D366C8a30a69"
+  },
+  "BAGS": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0x9A1b55Ff9b577aFF279F3cB0175Ab3De87bA38e5"
+  },
+  "BCH": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0x98b666722D9Def641D8D4836c7cA3c38317B6B98"
+  },
+  "BTC": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0xD5c40f5144848Bd4EF08a9605d860e727b991513"
+  },
+  "COMP": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0x13ae1F09038d273d5F094D95fFeA122Ef2190De4"
+  },
+  "DOT": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0x0A7b23E981F16a429C8710C82f5fa5d01453A259"
+  },
+  "ETH": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0x5Fa530068e0F5046479c588775c157930EF0Dff0"
+  },
+  "EUR": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0x9bF18dd428F39453248B3Fa5723fabC4f0df0b6f"
+  },
+  "FIL": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0x4d8869eCF1F8C78C0bd2439c4BcAE50AC8420bC4"
+  },
+  "HT": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0x8EC213E7191488C7873cEC6daC8e97cdbAdb7B35"
+  },
+  "HUSD": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0x45f86CA2A8BC9EBD757225B19a1A0D7051bE46Db"
+  },
+  "LTC": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0x87Ea38c9F24264Ec1Fff41B04ec94a97Caf99941"
+  },
+  "MDX": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0xaC4600b8F42317eAF056Cceb06cFf987c294840B"
+  },
+  "SNX": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0x1797a410485FeD6B05d5b39A475ddB9C33898ee8"
+  },
+  "UNI": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0x1E22E1eD4a96B4529D78cd4Bac55313809deF016"
+  },
+  "USDT": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0xF0D3585D8dC9f1D1D1a7dd02b48C2630d9DD78eD"
+  },
+  "WTI": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0xe9d01939688ab022B074Bc6A727f42400C43C4D1"
+  },
+  "XAG": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0x116EeB23384451C78ed366D4f67D5AD44eE771A0"
+  },
+  "XAU": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0x41e754c5D37b6D259f57d7fc9daEB118fa479b0b"
+  },
+  "YFII": {
+    "target": "USD",
+    "decimals": "8",
+    "contract": "0xf64EbB7635c8ed885d82fD87544eD2041dEEd8F8"
+  }
+}
