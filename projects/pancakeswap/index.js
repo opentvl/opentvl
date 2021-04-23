@@ -5,8 +5,8 @@ const BigNumber = require('bignumber.js');
 const REWARD_TOKEN = require('./abis/rewardToken.json');
 const CAKE = '0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82';
 
-const START_BLOCK = 586851;
-const FACTORY = '0xbcfccbde45ce874adcb698cc183debcf17952812';
+//const START_BLOCK = 586851;
+//const FACTORY = '0xbcfccbde45ce874adcb698cc183debcf17952812';
 
 async function fetchPairAddresses() {
   const result = await (

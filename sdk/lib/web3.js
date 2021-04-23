@@ -68,7 +68,13 @@ async function getLogs({ web3, scan, limiter, batchSize, target, topic, topics, 
   // assume scattered events can be returned in one page
   // TODO we may need to avoid this assumption
   // and add pagination support at some point
-  const txs = await scan.getTxListInternal({ address: target, startBlock: fromBlock, endBlock: toBlock });
+  const [externalTxs, internalTxs] = await Promise.all(
+    [
+      await scan.getTxList({ address: target, startBlock: fromBlock, endBlock: toBlock }),
+      await scan.getTxListInternal({ address: target, startBlock: fromBlock, endBlock: toBlock })
+    ]
+  )
+  const txs = [...externalTxs, ...internalTxs];
 
   debug("found txs count", txs.length);
 

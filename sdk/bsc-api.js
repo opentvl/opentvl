@@ -25,7 +25,7 @@ const BSC_WEB3 = new Eth(BSC_RPC_URL);
 const BSC_SCAN = new Etherscan(BSC_SCAN_KEY, "https://api.bscscan.com/api");
 const BSC_LIMITER = new Bottleneck({ maxConcurrent: 10, minTime: 50 });
 const BSC_MULTICALL_PROVIDER = "0xe7144e57d832c9005D252f415d205b4b8D78228e";
-const BSC_GET_LOGS_BATCH_SIZE = 5000;
+const BSC_GET_LOGS_BATCH_SIZE = 500;
 
 const NATIVE_TOKEN_ADDRESS = "0x0000000000000000000000000000000000000000";
 const NATIVE_TOKEN_SYMBOL = "BNB";
