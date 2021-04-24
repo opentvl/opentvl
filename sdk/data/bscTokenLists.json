@@ -543,5 +543,9 @@
     "symbol": "ACSI",
     "contract": "0x5b17b4d5e4009B5C43e3e3d63A5229F794cBA389",
     "decimals": "18"
+  },
+  {
+    "symbol": "SAFEMOON",
+    "contract": "0x8076c74c5e3f5852037f31ff0093eeb8c8add8d3"
   }
 ]
