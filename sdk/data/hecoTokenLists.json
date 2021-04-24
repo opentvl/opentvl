@@ -1,1 +1,297 @@
-[]
+[
+  {
+    "symbol": "HBTC",
+    "contract": "0x66a79d23e58475d2738179ca52cd0b41d73f0bea",
+    "decimals": "18"
+  },
+  {
+    "symbol": "ETH",
+    "contract": "0x64ff637fb478863b7468bc97d30a5bf3a428a1fd",
+    "decimals": "18"
+  },
+  {
+    "symbol": "USDTHECO",
+    "contract": "0xa71edc38d189767582c38a3145b5873052c3e47a",
+    "decimals": "18"
+  },
+  {
+    "symbol": "HDOT",
+    "contract": "0xa2c49cee16a5e5bdefde931107dc1fae9f7773e3",
+    "decimals": "18"
+  },
+  {
+    "symbol": "UNI",
+    "contract": "0x22c54ce8321a4015740ee1109d9cbc25815c46e6",
+    "decimals": "18"
+  },
+  {
+    "symbol": "HLTC",
+    "contract": "0xecb56cf772b5c9a6907fb7d32387da2fcbfb63b4",
+    "decimals": "18"
+  },
+  {
+    "symbol": "HBCH",
+    "contract": "0xef3cebd77e0c52cb6f60875d9306397b5caca375",
+    "decimals": "18"
+  },
+  {
+    "symbol": "LINK",
+    "contract": "0x9e004545c59d359f6b7bfb06a26390b087717b42",
+    "decimals": "18"
+  },
+  {
+    "symbol": "USDC-HECO",
+    "contract": "0x9362bbef4b8313a8aa9f0c9808b80577aa26b73b",
+    "decimals": "6"
+  },
+  {
+    "symbol": "HFIL",
+    "contract": "0xae3a768f9ab104c69a7cd6041fe16ffa235d1810",
+    "decimals": "18"
+  },
+  {
+    "symbol": "WBTC",
+    "contract": "0x70d171d269d964d14af9617858540061e7be9ef1",
+    "decimals": "8"
+  },
+  {
+    "symbol": "HBSV",
+    "contract": "0xc2cb6b5357ccce1b99cd22232942d9a225ea4eb1",
+    "decimals": "18"
+  },
+  {
+    "symbol": "AAVE",
+    "contract": "0x202b4936fe1a82a4965220860ae46d7d3939bb25",
+    "decimals": "18"
+  },
+  {
+    "symbol": "FTT",
+    "contract": "0xc7f7a54892b78b5c812c58d9df8035fce9f4d445",
+    "decimals": "18"
+  },
+  {
+    "symbol": "HXTZ",
+    "contract": "0x45e97dad828ad735af1df0473fc2735f0fd5330c",
+    "decimals": "18"
+  },
+  {
+    "symbol": "MKR",
+    "contract": "0x34d75515090902a513f009f4505a750efaad63b0",
+    "decimals": "18"
+  },
+  {
+    "symbol": "DAI-HECO",
+    "contract": "0x3d760a45d0887dfd89a2f5385a236b29cb46ed2a",
+    "decimals": "18"
+  },
+  {
+    "symbol": "WHT",
+    "contract": "0x5545153ccfca01fbd7dd11c0b23ba694d9509a6f",
+    "decimals": "18"
+  },
+  {
+    "symbol": "SNX",
+    "contract": "0x777850281719d5a96c29812ab72f822e0e09f3da",
+    "decimals": "18"
+  },
+  {
+    "symbol": "NEXO",
+    "contract": "0x3a6b8b642aa154bada89ed3730c9e820da79ad24",
+    "decimals": "18"
+  },
+  {
+    "symbol": "BAT",
+    "contract": "0xb04ee982e6329febe4c70a53d1725469a1f6963a",
+    "decimals": "18"
+  },
+  {
+    "symbol": "GRT",
+    "contract": "0xfadd0c7762c59cebc5248019dbac652319cebdbd",
+    "decimals": "18"
+  },
+  {
+    "symbol": "MANA",
+    "contract": "0x09006b66d89e5213fc173403aacba30620a91f4e",
+    "decimals": "18"
+  },
+  {
+    "symbol": "YFI",
+    "contract": "0xb4f019beac758abbee2f906033aaa2f0f6dacb35",
+    "decimals": "18"
+  },
+  {
+    "symbol": "UMA",
+    "contract": "0xe2563f0a1787ac8a9fa67f3124a3d0ae92d574d2",
+    "decimals": "18"
+  },
+  {
+    "symbol": "ZRX",
+    "contract": "0x0212da773704cbc4f476ba827406363c87e8d3bd",
+    "decimals": "18"
+  },
+  {
+    "symbol": "BNT",
+    "contract": "0x756a3dcf7171ad147a801318a7cab3284cff6a85",
+    "decimals": "18"
+  },
+  {
+    "symbol": "PAX-HECO",
+    "contract": "0x62057691dd4970dd109231b2658ff201e15e767a",
+    "decimals": "18"
+  },
+  {
+    "symbol": "RSR",
+    "contract": "0x8f6303c8a21398c91abb5eff3b3c9315ca59cbe8",
+    "decimals": "18"
+  },
+  {
+    "symbol": "HUSD",
+    "contract": "0x0298c2b32eae4da002a15f36fdf7615bea3da047",
+    "decimals": "8"
+  },
+  {
+    "symbol": "CRV",
+    "contract": "0x6bce534a02f8347f747124082ef3e35dd696748d",
+    "decimals": "18"
+  },
+  {
+    "symbol": "NPXS",
+    "contract": "0x7b92e0af7ae7de1c65710869f691231772a8b927",
+    "decimals": "18"
+  },
+  {
+    "symbol": "1INCH",
+    "contract": "0xd192f8e3224ff0f48b08db4791576b6878b426a0",
+    "decimals": "18"
+  },
+  {
+    "symbol": "LRC",
+    "contract": "0xbf22f76657601a522cf9ac832718a3404302d6bc",
+    "decimals": "18"
+  },
+  {
+    "symbol": "BAL",
+    "contract": "0x045de15ca76e76426e8fc7cba8392a3138078d0f",
+    "decimals": "18"
+  },
+  {
+    "symbol": "ZKS",
+    "contract": "0xe25a7d0b6bcda2a832d255edef1387e72d20883b",
+    "decimals": "18"
+  },
+  {
+    "symbol": "HBC",
+    "contract": "0x894b2917c783514c9e4c24229bf60f3cb4c9c905",
+    "decimals": "18"
+  },
+  {
+    "symbol": "MDX",
+    "contract": "0x25d2e80cb6b86881fd7e07dd263fb79f4abe033c",
+    "decimals": "18"
+  },
+  {
+    "symbol": "LAMB",
+    "contract": "0xe131f048d85f0391a24435eefb7763199b587d0e",
+    "decimals": "18"
+  },
+  {
+    "symbol": "MX",
+    "contract": "0x8d854e603dc777337134286f5b3408261736a88f",
+    "decimals": "18"
+  },
+  {
+    "symbol": "YCC",
+    "contract": "0x80898823fdd0b961c2e9809ef75b673e7f4aa02d",
+    "decimals": "8"
+  },
+  {
+    "symbol": "ARPA",
+    "contract": "0x5a6b72dd6209a770ae1c02a7a2e1900636072d0b",
+    "decimals": "18"
+  },
+  {
+    "symbol": "SWFTC",
+    "contract": "0x329dda64cbc4dfd5fa5072b447b3941ce054ebb3",
+    "decimals": "8"
+  },
+  {
+    "symbol": "ANY",
+    "contract": "0x538cee985e930557d16c383783ca957fa90b63b3",
+    "decimals": "18"
+  },
+  {
+    "symbol": "MATTER",
+    "contract": "0x1c9491865a1de77c5b6e19d2e6a5f1d7a6f2b25f",
+    "decimals": "18"
+  },
+  {
+    "symbol": "NVT",
+    "contract": "0xf0e406c49c63abf358030a299c0e00118c4c6ba5",
+    "decimals": "8"
+  },
+  {
+    "symbol": "ACH",
+    "contract": "0x4a31d1ad7430586752a1888fe947e3e7d52affb8",
+    "decimals": "8"
+  },
+  {
+    "symbol": "CNNS",
+    "contract": "0x4bf06f76c68d81bde1f87535fdcb60adadb01cf5",
+    "decimals": "18"
+  },
+  {
+    "symbol": "SKM",
+    "contract": "0x96674f8da3f9c6acb4a56b393af9a490d70d16d0",
+    "decimals": "18"
+  },
+  {
+    "symbol": "BETH",
+    "contract": "0xb6f4c418514dd4680f76d5caa3bb42db4a893acb",
+    "decimals": "18"
+  },
+  {
+    "symbol": "GOF",
+    "contract": "0x2aafe3c9118db36a20dd4a942b6ff3e78981dce1",
+    "decimals": "18"
+  },
+  {
+    "symbol": "HPT",
+    "contract": "0xe499ef4616993730ced0f31fa2703b92b50bb536",
+    "decimals": "18"
+  },
+  {
+    "symbol": "MUSK",
+    "contract": "0x245a3bb0fb1385522d883d8d8b4a91da17548c07",
+    "decimals": "18"
+  },
+  {
+    "symbol": "COMP",
+    "contract": "0xce0a5ca134fb59402b723412994b30e02f083842",
+    "decimals": "18"
+  },
+  {
+    "symbol": "CRO",
+    "contract": "0xf7e1e39e239c5a920849f435f66097d2e412859e",
+    "decimals": "8"
+  },
+  {
+    "symbol": "HOT",
+    "contract": "0x26db8742da87d2e74911bfa4a349d4f6f7fc6037",
+    "decimals": "18"
+  },
+  {
+    "symbol": "MATIC",
+    "contract": "0xdb11743fe8b129b49b11236e8a715004bdabe7e5",
+    "decimals": "18"
+  },
+  {
+    "symbol": "OMG",
+    "contract": "0x359aa457cc0ef0a64b8aa7e4ecd967dfb30cef48",
+    "decimals": "18"
+  },
+  {
+    "symbol": "REN",
+    "contract": "0x212208bcc81f3a2d0188aff76a2d39351eb53b96",
+    "decimals": "18"
+  }
+]
