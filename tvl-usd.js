@@ -3,6 +3,7 @@ const sdk = require("./sdk");
 const fetch = require("node-fetch");
 const BigNumber = require('bignumber.js');
 const limiter = new Bottleneck({ maxConcurrent: 1, minTime: 600 });
+const debug = require("debug")("opentvl:tvl-usd");
 
 const COIN_GECKO_IDS = require("./sdk/data/coinGeckoIDs.json");
 
@@ -54,6 +55,8 @@ async function fetchGroupPrices(group) {
 
     if (token?.id) {
       acc.push({ id: token.id, symbol, count });
+    } else {
+      debug(`unable to find coingecko id for ${symbol}`);
     }
     return acc;
   }, []);
