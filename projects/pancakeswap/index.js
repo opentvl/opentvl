@@ -78,45 +78,20 @@ async function getPoolDeposits(block) {
   }, {});
 }
 
-async function getPoolBalances(block) {
-  const poolRewards = await getPoolRewards(block);
-  const poolDeposits = await getPoolDeposits(block);
-
-  return combineBalances(poolDeposits, poolRewards);
-}
-
-function combineBalances(b1, b2) {
-  const normal1 = Object.entries(b1).reduce((acc, [key, value]) => {
-    acc[key.toLowerCase()] = value;
-    return acc;
-  }, {});
-  const normal2 = Object.entries(b2).reduce((acc, [key, value]) => {
-    acc[key.toLowerCase()] = value;
-    return acc;
-  }, {});
-
-  const addressSet = new Set([...Object.keys(normal1), ...Object.keys(normal2)]);
-  const addresses = Array.from(addressSet);
-
-  return addresses.reduce((acc, address) => {
-    const balance1 = new BigNumber(normal1[address] ?? '0');
-    const balance2 = new BigNumber(normal2[address] ?? '0');
-    acc[address] = balance1.plus(balance2).toFixed();
-
-    return acc;
-  }, {});
-}
-
 async function tvl(_, block) {
   const pairAddresses = await fetchPairAddresses();
   //const pairAddresses = await sdk.bsc.swap.getPairAddresses(FACTORY, START_BLOCK, block.bsc);
 
-  const poolBalances = await getPoolBalances(block);
-  const reserveBalances = await sdk.bsc.swap.getReservedBalances(pairAddresses);
+  const balances = await Promise.all(
+    [
+      await getPoolRewards(block),
+      await getPoolDeposits(block),
+      await sdk.bsc.swap.getReservedBalances(pairAddresses)
+    ]
+  )
 
-  const balances = combineBalances(poolBalances, reserveBalances);
-
-  return (await sdk.bsc.util.toSymbols(balances)).output;
+  const summedBalances = sdk.util.sum(balances);
+  return (await sdk.bsc.util.toSymbols(summedBalances)).output;
 }
 
 module.exports = {
