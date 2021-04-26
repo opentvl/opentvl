@@ -62,9 +62,7 @@ function groupBlocks(blockIds, batchSize) {
   return groups;
 }
 
-async function getLogs({ web3, scan, limiter, batchSize, target, topic, topics, keys = [], fromBlock, toBlock }) {
-  debug("getLogs", target, topic, keys, fromBlock, toBlock);
-
+async function getBlockGroups({ scan, target, fromBlock, toBlock, batchSize }) {
   // assume scattered events can be returned in one page
   // TODO we may need to avoid this assumption
   // and add pagination support at some point
@@ -94,19 +92,65 @@ async function getLogs({ web3, scan, limiter, batchSize, target, topic, topics, 
 
   debug("arranged into groups", blockGroups.length);
 
-  const rateLimitedGetPastLogs = limiter.wrap(web3.getPastLogs);
+  return blockGroups;
+}
 
-  const allLogRequests = await Promise.all(
-    blockGroups.map(async ([fromBlock, toBlock]) => {
-      const logs = await rateLimitedGetPastLogs({
-        fromBlock,
-        toBlock,
-        address: target,
-        topics: topics || [utils.sha3(topic)]
-      });
+async function safeGetPastLogs({ address, topics, fromBlock, toBlock, getPastLogs }) {
+  const numTries = 5;
+  let numTriesLeft = numTries;
+  let ranges = [[fromBlock, toBlock]];
+
+  while (numTriesLeft > 0) {
+    try {
+      const logs = (await Promise.all(
+        ranges.map(async ([fromBlock, toBlock]) => {
+          return await getPastLogs({
+            fromBlock,
+            toBlock,
+            address,
+            topics
+          });
+        })
+      ))
+        .flat();
 
       debug(`GetPastLogs from block ${fromBlock} to ${toBlock}`);
 
+      return [numTries - numTriesLeft + 1, logs];
+    } catch(err) {
+      ranges = ranges.reduce((acc, [fromBlock, toBlock]) => {
+        if (fromBlock === toBlock) {
+          return [...acc, [fromBlock, toBlock]];
+        } else {
+          const midBlock = Math.floor((fromBlock + toBlock) / 2);
+
+          return [...acc, [fromBlock, midBlock], [midBlock, toBlock]];
+        }
+      }, []);
+
+      numTriesLeft -= 1;
+    }
+  }
+
+  debug(`GetPastLogs failed from block ${fromBlock} to ${toBlock}`);
+  return [];
+}
+
+async function getLogsForGroups({ web3, limiter, target, groups, topic, topics, keys = [] }) {
+  const rateLimitedGetPastLogs = limiter.wrap(web3.getPastLogs);
+
+  let callCount = 0;
+  const allLogRequests = await Promise.all(
+    groups.map(async ([fromBlock, toBlock]) => {
+      const [numCalls, logs] = await safeGetPastLogs({
+        fromBlock,
+        toBlock,
+        address: target,
+        topics: topics || [utils.sha3(topic)],
+        getPastLogs: rateLimitedGetPastLogs
+      });
+
+      callCount += numCalls;
       return logs;
     })
   );
@@ -121,7 +165,7 @@ async function getLogs({ web3, scan, limiter, batchSize, target, topic, topics, 
     debug("return with keys", keys);
 
     return {
-      callCount: allLogRequests.length,
+      callCount,
       output: allLogs.map(log => {
         if (keys.length === 1) {
           return log[keys[0]];
@@ -141,6 +185,13 @@ async function getLogs({ web3, scan, limiter, batchSize, target, topic, topics, 
     callCount: allLogRequests.length,
     output: allLogs
   };
+}
+
+async function getLogs({ web3, scan, limiter, batchSize, target, topic, topics, keys = [], fromBlock, toBlock }) {
+  debug("getLogs", target, topic, keys, fromBlock, toBlock);
+
+  const groups = await getBlockGroups({ scan, target, fromBlock, toBlock, batchSize });
+  return await getLogsForGroups({ web3, limiter, target, groups, topic, topics, keys });
 }
 
 function normalizeCallParams(params) {
