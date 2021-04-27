@@ -67,6 +67,12 @@ async function fetchGroupPrices(group) {
   const priceJSON = await priceRes.json();
 
   return groupWithIDs.map(({ id, symbol, count }) => {
+    if (!priceJSON[id]) {
+      debug("missing price information for", id, symbol);
+
+      return { symbol, tvl: 0, count };
+    }
+
     const price = priceJSON[id].usd;
 
     return { symbol, tvl: price ? count * price : 0, price, count };

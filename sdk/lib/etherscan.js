@@ -29,6 +29,8 @@ class Etherscan {
       address: options.address,
       startblock: options.startBlock,
       endblock: options.endBlock,
+      page: options.page,
+      offset: options.offset,
       sort: options.sort
     });
   }
@@ -39,6 +41,8 @@ class Etherscan {
       address: options.address,
       startblock: options.startBlock,
       endblock: options.endBlock,
+      page: options.page,
+      offset: options.offset,
       sort: options.sort
     });
   }
