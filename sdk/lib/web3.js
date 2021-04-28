@@ -63,9 +63,6 @@ function groupBlocks(blockIds, batchSize) {
 }
 
 async function getScanTxs({ scan, target, fromBlock, toBlock }) {
-  // assume scattered events can be returned in one page
-  // TODO we may need to avoid this assumption
-  // and add pagination support at some point
   const [externalTxs, internalTxs] = await Promise.all([
     await scan.getTxList({ address: target, startBlock: fromBlock, endBlock: toBlock }),
     await scan.getTxListInternal({ address: target, startBlock: fromBlock, endBlock: toBlock })
