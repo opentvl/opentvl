@@ -8,8 +8,8 @@ const tokenList = require("./data/ethTokenLists.json");
 const { getBalance, getBalances, getLogs, singleCall, multiCall } = require("./lib/web3");
 const debug = require("debug")("opentvl:eth-api");
 const { applyDecimals } = require("./lib/big-number");
-const { getReservedBalances } = require("./lib/swap");
 const { getSupportedTokens, getUSDPrices } = require("./lib/chainlink");
+const { getReservedBalances, getPairAddresses } = require("./lib/swap");
 
 if (!process.env.ETH_RPC_URL) {
   throw new Error(`Please set environment variable ETH_RPC_URL`);
@@ -290,6 +290,15 @@ async function swapGetReservedBalances(pairAddresses) {
   });
 }
 
+async function swapGetPairAddresses(factoryAddress, fromBlock, toBlock) {
+  return getPairAddresses({
+    factoryAddress,
+    fromBlock,
+    toBlock,
+    getLogs: utilGetLogs
+  });
+}
+
 function chainlinkGetSupportedTokens() {
   return getSupportedTokens({ feedList });
 }
@@ -332,7 +341,8 @@ module.exports = {
     balanceOf: erc20BalanceOf
   },
   swap: {
-    getReservedBalances: swapGetReservedBalances
+    getReservedBalances: swapGetReservedBalances,
+    getPairAddresses: swapGetPairAddresses
   },
   chainlink: {
     getSupportedTokens: chainlinkGetSupportedTokens,

@@ -5,6 +5,28 @@ const TOKEN0_ABI = SWAP.find(item => item.name === "token0");
 const TOKEN1_ABI = SWAP.find(item => item.name === "token1");
 const GET_RESERVES_ABI = SWAP.find(item => item.name === "getReserves");
 
+async function getPairAddresses({ factoryAddress, fromBlock, toBlock, getLogs }) {
+  const logs = (
+    await getLogs({
+      keys: [],
+      toBlock,
+      target: factoryAddress,
+      fromBlock,
+      topic: 'PairCreated(address,address,address,uint256)'
+    })
+  ).output;
+
+  const pairAddresses = logs
+    // sometimes the full log is emitted
+    .map(log =>
+      typeof log === 'string' ? log : `0x${log.data.slice(64 - 40 + 2, 64 + 2)}`
+    )
+    // lowercase
+    .map(pairAddress => pairAddress.toLowerCase())
+
+  return pairAddresses;
+}
+
 async function getReservedBalances({ pairAddresses, tokenList, multiCall }) {
   const supportedTokens = tokenList.map(({ contract }) => contract);
 
@@ -95,5 +117,6 @@ async function getReservedBalances({ pairAddresses, tokenList, multiCall }) {
 }
 
 module.exports = {
-  getReservedBalances
+  getReservedBalances,
+  getPairAddresses
 };

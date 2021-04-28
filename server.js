@@ -69,18 +69,14 @@ app.get("/projects/:project/tvl_by_usd", async (req, res) => {
     }
 
     const output = await fetchTVL(project);
-
-    debug("Start tvl compute");
-    const priceStartedAt = Date.now();
     const tvlUSD = await computeTVLUSD(output);
 
     debug("final result", tvlUSD);
-    debug(`price processing time ${Date.now() - priceStartedAt}`);
     debug(`total processing time ${Date.now() - startedAt}ms`);
 
     res.json({ USD: tvlUSD });
   } catch (err) {
-    console.log("project processing error", err);
+    console.log("project processing error:", err);
 
     res.status(500).json({ error: err.message });
   }

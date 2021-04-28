@@ -1,11 +1,11 @@
+const BigNumber = require('bignumber.js');
 const Bottleneck = require("bottleneck");
 const sdk = require("./sdk");
 const fetch = require("node-fetch");
-const BigNumber = require('bignumber.js');
 const limiter = new Bottleneck({ maxConcurrent: 1, minTime: 600 });
 const debug = require("debug")("opentvl:tvl-usd");
 
-const COIN_GECKO_IDS = require("./sdk/data/coinGeckoIDs.json");
+const COIN_GECKO_IDS = require("./coinGeckoIDs.json");
 
 function normalizeSymbol(symbol) {
   const mapping = {
@@ -67,9 +67,16 @@ async function fetchGroupPrices(group) {
   const priceJSON = await priceRes.json();
 
   return groupWithIDs.map(({ id, symbol, count }) => {
-    const price = priceJSON[id].usd;
+    if (!priceJSON[id]?.usd) {
+      debug("missing price information for", id, symbol);
 
-    return { symbol, tvl: price ? count * price : 0, price, count };
+      return { symbol, tvl: new BigNumber(0), price: new BigNumber(0), count };
+    }
+
+    const price = new BigNumber(priceJSON[id].usd);
+    const tvl = price.multipliedBy(new BigNumber(count));
+
+    return { symbol, tvl, price, count };
   });
 }
 
@@ -109,10 +116,9 @@ async function computeTVLUSD(tokenCounts) {
   const hecoTokenPrices = await sdk.heco.chainlink.getUSDPrices(hecoTokens);
   const coinGeckoPrices = await fetchCoinGeckoPrices(coinGeckoTokens);
 
-  const tvl = [...ethTokenPrices, ...bscTokenPrices, ...hecoTokenPrices, ...coinGeckoPrices].reduce(
-    (sum, { tvl }) => sum.plus(tvl),
-    BigNumber(0)
-  );
+  const prices = [...ethTokenPrices, ...bscTokenPrices, ...hecoTokenPrices, ...coinGeckoPrices];
+
+  const tvl = prices.reduce((sum, { tvl }) => sum.plus(tvl), BigNumber(0));
 
   return tvl.toNumber();
 }

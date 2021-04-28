@@ -29,6 +29,8 @@ class Etherscan {
       address: options.address,
       startblock: options.startBlock,
       endblock: options.endBlock,
+      page: options.page,
+      offset: options.offset,
       sort: options.sort
     });
   }
@@ -39,6 +41,8 @@ class Etherscan {
       address: options.address,
       startblock: options.startBlock,
       endblock: options.endBlock,
+      page: options.page,
+      offset: options.offset,
       sort: options.sort
     });
   }
@@ -63,7 +67,7 @@ class Etherscan {
       json: true
     });
 
-    if (data.status !== "1") {
+    if (data.status !== "1" && data.message !== "No transactions found") {
       return Promise.reject(`API returned result "${data.result}"`);
     }
     return data.result;
