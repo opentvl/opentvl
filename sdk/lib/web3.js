@@ -62,18 +62,23 @@ function groupBlocks(blockIds, batchSize) {
   return groups;
 }
 
-async function getBlockGroups({ scan, target, fromBlock, toBlock, batchSize }) {
+async function getScanTxs({ scan, target, fromBlock, toBlock }) {
   // assume scattered events can be returned in one page
   // TODO we may need to avoid this assumption
   // and add pagination support at some point
   const [externalTxs, internalTxs] = await Promise.all([
     await scan.getTxList({ address: target, startBlock: fromBlock, endBlock: toBlock }),
     await scan.getTxListInternal({ address: target, startBlock: fromBlock, endBlock: toBlock })
-  ]);
-  const txs = [...externalTxs, ...internalTxs];
+  ])
 
-  debug("found txs count", txs.length);
+  debug("found external txs count", externalTxs.length);
+  debug("found internal txs count", internalTxs.length);
+  debug("found total txs count", [...externalTxs, ...internalTxs].length);
 
+  return [externalTxs, internalTxs];
+}
+
+function generateScanGroups({ txs, batchSize }) {
   const blocks = txs.reduce((acc, tx) => {
     const height = parseInt(tx.blockNumber, 10);
 
@@ -93,7 +98,17 @@ async function getBlockGroups({ scan, target, fromBlock, toBlock, batchSize }) {
   return blockGroups;
 }
 
-async function safeGetPastLogs({ address, topics, fromBlock, toBlock, getPastLogs }) {
+function generateNaiveGroups(fromBlock, toBlock, batchSize) {
+  const groups = [];
+
+  for (let i = fromBlock; i <= toBlock; i += batchSize) {
+    groups.push([i, Math.min(toBlock, i + batchSize - 1)]);
+  }
+
+  return groups;
+}
+
+async function retryGetGroupLogs({ address, topics, fromBlock, toBlock, getPastLogs }) {
   const numTries = 5;
   let numTriesLeft = numTries;
   let ranges = [[fromBlock, toBlock]];
@@ -138,13 +153,23 @@ async function safeGetPastLogs({ address, topics, fromBlock, toBlock, getPastLog
   return [numTries, []];
 }
 
-async function getLogsForGroups({ web3, limiter, target, groups, topic, topics, keys = [] }) {
+async function getLogs({ web3, scan, limiter, batchSize, target, topic, topics, keys = [], fromBlock, toBlock }) {
+  debug("getLogs", target, topic, keys, fromBlock, toBlock);
+
+  const [externalTxs, internalTxs] = await getScanTxs({ scan, target, fromBlock, toBlock });
+
+  const groups = externalTxs.length >= 10000 || internalTxs.length >= 10000 ? (
+    generateNaiveGroups(fromBlock, toBlock, batchSize)
+  ) : (
+    generateScanGroups({ txs: [...externalTxs, ...internalTxs], batchSize })
+  )
+
   const rateLimitedGetPastLogs = limiter.wrap(web3.getPastLogs);
 
   let callCount = 0;
   const allLogRequests = await Promise.all(
     groups.map(async ([fromBlock, toBlock]) => {
-      const [numCalls, logs] = await safeGetPastLogs({
+      const [numCalls, logs] = await retryGetGroupLogs({
         fromBlock,
         toBlock,
         address: target,
@@ -187,24 +212,6 @@ async function getLogsForGroups({ web3, limiter, target, groups, topic, topics, 
     callCount: allLogRequests.length,
     output: allLogs
   };
-}
-
-function generateGroups(fromBlock, toBlock, batchSize) {
-  const groups = [];
-
-  for (let i = fromBlock; i <= toBlock; i += batchSize) {
-    groups.push([i, i + batchSize - 1]);
-  }
-
-  return groups;
-}
-
-async function getLogs({ web3, scan, limiter, batchSize, target, topic, topics, keys = [], fromBlock, toBlock }) {
-  debug("getLogs", target, topic, keys, fromBlock, toBlock);
-
-  const groups = await getBlockGroups({ scan, target, fromBlock, toBlock, batchSize });
-  // const groups = generateGroups(fromBlock, toBlock, batchSize);
-  return await getLogsForGroups({ web3, limiter, target, groups, topic, topics, keys });
 }
 
 function normalizeCallParams(params) {

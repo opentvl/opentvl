@@ -7,7 +7,7 @@ async function tvl(_, block) {
   const pairAddresses = await sdk.bsc.swap.getPairAddresses(FACTORY, START_BLOCK, block.bsc);
   const balances = await sdk.bsc.swap.getReservedBalances(pairAddresses);
 
-  return (await sdk.bsc.util.toSymbols(balances)).output
+  return (await sdk.bsc.util.toSymbols(balances)).output;
 }
 
 module.exports = {

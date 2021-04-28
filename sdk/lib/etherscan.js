@@ -67,7 +67,7 @@ class Etherscan {
       json: true
     });
 
-    if (data.status !== "1") {
+    if (data.status !== "1" && data.message !== "No transactions found") {
       return Promise.reject(`API returned result "${data.result}"`);
     }
     return data.result;
