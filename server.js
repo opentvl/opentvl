@@ -3,7 +3,6 @@ require("dotenv").config();
 const Eth = require("web3-eth");
 const express = require("express");
 const { readdir } = require("fs").promises;
-const sdk = require("./sdk");
 const debug = require("debug")("opentvl:server");
 const computeTVLUSD = require("./tvl-usd");
 
@@ -69,6 +68,7 @@ app.get("/projects/:project/tvl_by_usd", async (req, res) => {
     }
 
     const output = await fetchTVL(project);
+
     const tvlUSD = await computeTVLUSD(output);
 
     debug("final result", tvlUSD);
@@ -128,14 +128,6 @@ async function fetchTVL(project) {
   }
 
   debug("found tvl in symbols", output);
-
-  output = sdk.util.sum(
-    [
-      output.eth && (await sdk.eth.util.toSymbols(output.eth)).output,
-      output.bsc && (await sdk.bsc.util.toSymbols(output.bsc)).output,
-      output.heco && (await sdk.heco.util.toSymbols(output.heco)).output
-    ].filter(Boolean)
-  );
 
   return output;
 }

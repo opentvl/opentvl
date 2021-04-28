@@ -1,4 +1,4 @@
-const BigNumber = require('bignumber.js');
+const BigNumber = require("bignumber.js");
 const Bottleneck = require("bottleneck");
 const sdk = require("./sdk");
 const fetch = require("node-fetch");
@@ -9,15 +9,15 @@ const COIN_GECKO_IDS = require("./coinGeckoIDs.json");
 
 function normalizeSymbol(symbol) {
   const mapping = {
-    "WBNB": "BNB",
-    "WETH": "ETH",
-    "WBTC": "BTC",
-    "HDOT": "DOT",
+    WBNB: "BNB",
+    WETH: "ETH",
+    WBTC: "BTC",
+    HDOT: "DOT",
     "UNI-V2": "UNI"
-  }
+  };
 
   const formatted = symbol.toUpperCase();
-  return mapping[formatted] ?? formatted; 
+  return mapping[formatted] ?? formatted;
 }
 
 function partitionTokens(tokenCounts) {
@@ -94,12 +94,7 @@ async function fetchCoinGeckoPrices(coinGeckoTokens) {
     [...Array(numGroups)].map(() => [])
   );
 
-  const prices = (
-    await Promise.all(
-      tokenGroups.map(async group => await rateLimitedFetchGroupPrices(group))
-    )
-  )
-    .flat()
+  const prices = (await Promise.all(tokenGroups.map(async group => await rateLimitedFetchGroupPrices(group)))).flat();
 
   return prices;
 }
@@ -108,7 +103,15 @@ async function fetchCoinGeckoPrices(coinGeckoTokens) {
 // find their corresponding proxy addresses, make the call to chainlink to get
 // the price, and then multiply the price by the token counts and sum all the
 // products together to get tvl in USD
-async function computeTVLUSD(tokenCounts) {
+async function computeTVLUSD(tokens) {
+  const tokenCounts = sdk.util.sum(
+    [
+      tokens.eth && (await sdk.eth.util.toSymbols(tokens.eth)).output,
+      tokens.bsc && (await sdk.bsc.util.toSymbols(tokens.bsc)).output,
+      tokens.heco && (await sdk.heco.util.toSymbols(tokens.heco)).output
+    ].filter(Boolean)
+  );
+
   const { ethTokens, bscTokens, hecoTokens, coinGeckoTokens } = partitionTokens(tokenCounts);
 
   const ethTokenPrices = await sdk.eth.chainlink.getUSDPrices(ethTokens);
