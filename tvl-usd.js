@@ -5,7 +5,7 @@ const fetch = require("node-fetch");
 const limiter = new Bottleneck({ maxConcurrent: 1, minTime: 600 });
 const debug = require("debug")("opentvl:tvl-usd");
 
-const COIN_GECKO_IDS = require("./sdk/data/coinGeckoIDs.json");
+const COIN_GECKO_IDS = require("./coinGeckoIDs.json");
 
 function normalizeSymbol(symbol) {
   const mapping = {
@@ -67,15 +67,16 @@ async function fetchGroupPrices(group) {
   const priceJSON = await priceRes.json();
 
   return groupWithIDs.map(({ id, symbol, count }) => {
-    if (!priceJSON[id]) {
+    if (!priceJSON[id]?.usd) {
       debug("missing price information for", id, symbol);
 
-      return { symbol, tvl: 0, count };
+      return { symbol, tvl: new BigNumber(0), price: new BigNumber(0), count };
     }
 
-    const price = priceJSON[id].usd;
+    const price = new BigNumber(priceJSON[id].usd);
+    const tvl = price.multipliedBy(new BigNumber(count));
 
-    return { symbol, tvl: price ? count * price : 0, price, count };
+    return { symbol, tvl, price, count };
   });
 }
 
