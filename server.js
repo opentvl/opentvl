@@ -24,7 +24,7 @@ const ETH_WEB3 = new Eth(process.env.ETH_RPC_URL);
 async function hasProject(project) {
   const projectNames = await readdir("projects");
 
-  return projectNames.some((name) => name === project);
+  return projectNames.some(name => name === project);
 }
 
 app.get("/projects/:project", async (req, res) => {
@@ -100,7 +100,7 @@ async function fetchTVL(project) {
 
   let block = {
     eth: ethBlock,
-    bsc: bscBlock,
+    bsc: bscBlock
   };
 
   debug("running tvl with block", block);
@@ -124,10 +124,18 @@ async function fetchTVL(project) {
       return acc;
     }, {});
 
-    output = (await sdk.eth.util.toSymbols(output)).output;
+    output = { eth: output };
   }
 
   debug("found tvl in symbols", output);
+
+  output = sdk.util.sum(
+    [
+      output.eth && (await sdk.eth.util.toSymbols(output.eth)).output,
+      output.bsc && (await sdk.bsc.util.toSymbols(output.bsc)).output,
+      output.heco && (await sdk.heco.util.toSymbols(output.heco)).output
+    ].filter(Boolean)
+  );
 
   return output;
 }

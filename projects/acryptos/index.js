@@ -8,8 +8,8 @@ async function tvl(timestamp, block) {
   const stableSwapResult = await stableSwapTvl(timestamp, block);
   // calculate tvl in vault (yearn)
   const vaultResult = await vaultTvl(timestamp, block);
-  const result = (await sdk.bsc.util.toSymbols(sdk.util.sum([stableSwapResult, vaultResult]))).output;
-  return result;
+
+  return { bsc: sdk.util.sum([stableSwapResult, vaultResult]) };
 }
 
 module.exports = {
@@ -18,5 +18,5 @@ module.exports = {
   token: "ACS",
   category: "assets",
   start: 3261994, // 02/12/2020 @ 12:00am (UTC)
-  tvl,
+  tvl
 };

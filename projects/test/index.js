@@ -52,14 +52,6 @@ async function tvl(_, block) {
   console.log('sdk.eth.util.tokenList', (await sdk.eth.util.tokenList()).length)
   console.log('sdk.eth.util.kyberTokens', await sdk.eth.util.kyberTokens())
   console.log(
-    'sdk.eth.util.toSymbols',
-    (
-      await sdk.eth.util.toSymbols({
-        [AAVE]: 123456
-      })
-    ).output
-  )
-  console.log(
     'sdk.eth.abi.call',
     await sdk.eth.abi.call({
       target: AAVE,
@@ -112,14 +104,6 @@ async function tvl(_, block) {
     ).output
   )
   console.log('sdk.bsc.util.tokenList', (await sdk.bsc.util.tokenList()).length)
-  console.log(
-    'sdk.bsc.util.toSymbols',
-    (
-      await sdk.bsc.util.toSymbols({
-        [CAKE]: 123456
-      })
-    ).output
-  )
   console.log(
     'sdk.bsc.abi.call',
     await sdk.bsc.abi.call({
@@ -178,14 +162,6 @@ async function tvl(_, block) {
   console.log(
     'sdk.heco.util.tokenList',
     (await sdk.heco.util.tokenList()).length
-  )
-  console.log(
-    'sdk.heco.util.toSymbols',
-    (
-      await sdk.heco.util.toSymbols({
-        [MDEX]: 123456
-      })
-    ).output
   )
   console.log(
     'sdk.heco.abi.call',

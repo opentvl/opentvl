@@ -49,7 +49,7 @@ async function tvl(_, block) {
 
   balances[SAFE_MOON_LP] = lpBalance;
 
-  return (await sdk.bsc.util.toSymbols(balances)).output;
+  return { bsc: balances };
 }
 
 module.exports = {

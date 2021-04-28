@@ -37,7 +37,7 @@ async function tvl(_, block) {
     ...totalReservedInPair
   };
 
-  return (await sdk.eth.util.toSymbols(reserveBalances)).output;
+  return { eth: reserveBalances };
 }
 
 module.exports = {

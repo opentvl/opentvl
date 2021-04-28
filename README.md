@@ -116,8 +116,8 @@ The important thing is that the adapter is expected to output an object with tok
 
 ```js
 {
-  "ETH": "1",
-  "DAI": "2"
+  "0x0000000000000000000000000000000000000000": "1",
+  "0x6B175474E89094C44Da98b954EedeAC495271d0F": "2"
 }
 ```
 

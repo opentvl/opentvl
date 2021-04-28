@@ -91,7 +91,7 @@ async function tvl(_, block) {
   )
 
   const summedBalances = sdk.util.sum(balances);
-  return (await sdk.bsc.util.toSymbols(summedBalances)).output;
+  return { bsc: summedBalances };
 }
 
 module.exports = {
