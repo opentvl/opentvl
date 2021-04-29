@@ -12,17 +12,15 @@ async function getPairAddresses({ factoryAddress, fromBlock, toBlock, getLogs })
       toBlock,
       target: factoryAddress,
       fromBlock,
-      topic: 'PairCreated(address,address,address,uint256)'
+      topic: "PairCreated(address,address,address,uint256)"
     })
   ).output;
 
   const pairAddresses = logs
     // sometimes the full log is emitted
-    .map(log =>
-      typeof log === 'string' ? log : `0x${log.data.slice(64 - 40 + 2, 64 + 2)}`
-    )
+    .map(log => (typeof log === "string" ? log : `0x${log.data.slice(64 - 40 + 2, 64 + 2)}`))
     // lowercase
-    .map(pairAddress => pairAddress.toLowerCase())
+    .map(pairAddress => pairAddress.toLowerCase());
 
   return pairAddresses;
 }
@@ -83,7 +81,7 @@ async function getReservedBalances({ pairAddresses, tokenList, multiCall }) {
     })
   ).output;
 
-  const reserveBalances = reserves.reduce((accumulator, reserve, i) => {
+  const reserveBalances = reserves.reduce((accumulator, reserve) => {
     if (reserve.success) {
       const pairAddress = reserve.input.target.toLowerCase();
       const pair = pairs[pairAddress] || {};

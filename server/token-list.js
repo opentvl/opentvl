@@ -1,8 +1,10 @@
 const _ = require("underscore");
 const sdk = require("../sdk");
 const fs = require("fs");
+const path = require("path");
 const fetch = require("node-fetch");
 const { parse } = require("node-html-parser");
+const debug = require("debug")("opentvl:server:token-list");
 
 const DECIMALS_ABI = {
   constant: true,
@@ -21,17 +23,17 @@ const DECIMALS_ABI = {
 
 const CHAINS = [
   {
-    file: "../sdk/data/bscTokenLists.json",
+    file: "bscTokenLists.json",
     scanUrl: "https://bscscan.com",
     multiCall: sdk.bsc.abi.multiCall
   },
   {
-    file: "../sdk/data/ethTokenLists.json",
+    file: "ethTokenLists.json",
     scanUrl: "https://etherscan.io",
     multiCall: sdk.eth.abi.multiCall
   },
   {
-    file: "../sdk/data/hecoTokenLists.json",
+    file: "hecoTokenLists.json",
     scanUrl: "https://hecoinfo.com",
     multiCall: sdk.heco.abi.multiCall
   }
@@ -75,23 +77,14 @@ async function fetchPage(scanUrl, page) {
   return tokens;
 }
 
-async function updateTokenLists() {
+async function saveTokenLists(directory) {
   for (let chain of CHAINS) {
-    console.log(`start updating ${chain.file}`);
+    const file = path.join(directory, chain.file);
 
     // fetch up to 1000 tokens
     const pageTokens = await Promise.all(_.range(1, 11).map(page => fetchPage(chain.scanUrl, page)));
 
     const allTokens = pageTokens.flat();
-    const existingTokens = require(chain.file);
-
-    existingTokens.forEach(token => {
-      const hasToken = allTokens.some(t => t.contract.toLowerCase() === token.contract.toLowerCase());
-
-      if (!hasToken) {
-        allTokens.push(token);
-      }
-    });
 
     const decimals = (
       await chain.multiCall({ abi: DECIMALS_ABI, calls: allTokens.map(t => ({ target: t.contract })) })
@@ -106,10 +99,10 @@ async function updateTokenLists() {
       return acc;
     }, []);
 
-    fs.writeFileSync(chain.file, JSON.stringify(updatedTokens, null, 2));
+    fs.writeFileSync(file, JSON.stringify(updatedTokens, null, 2));
 
-    console.log(`done updating ${chain.file}, total ${updatedTokens.length} tokens`);
+    debug(`saved total ${updatedTokens.length} tokens to ${file}`);
   }
 }
 
-updateTokenLists().catch(console.error);
+module.exports = { saveTokenLists };

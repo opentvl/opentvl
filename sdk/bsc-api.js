@@ -1,9 +1,9 @@
+const { readFileSync } = require("fs");
+const path = require("path");
 const Eth = require("web3-eth");
 const Etherscan = require("./lib/etherscan");
 const Bottleneck = require("bottleneck");
 const BEP20 = require("./abis/erc20.json");
-const feedList = require("./data/bscChainlinkFeeds.json");
-const tokenList = require("./data/bscTokenLists.json");
 const { getBalance, getBalances, getLogs, singleCall, multiCall } = require("./lib/web3");
 const debug = require("debug")("opentvl:bsc-api");
 const { applyDecimals } = require("./lib/big-number");
@@ -114,7 +114,7 @@ async function utilGetLogs({ target, topic, topics, keys, fromBlock, toBlock }) 
 async function utilTokenList() {
   debug("bsc.util.tokenList");
 
-  return tokenList;
+  return readFileSync(path.resolve(__dirname, "../.database/bscTokenLists.json"));
 }
 
 async function utilToSymbols(addressesBalances) {
@@ -283,10 +283,12 @@ async function swapGetPairAddresses(factoryAddress, fromBlock, toBlock) {
 }
 
 function chainlinkGetSupportedTokens() {
+  const feedList = readFileSync(path.resolve(__dirname, "../.database/bscChainlinkFeeds.json"));
   return getSupportedTokens({ feedList });
 }
 
 async function chainlinkGetUSDPrices(tokens) {
+  const feedList = readFileSync(path.resolve(__dirname, "../.database/bscChainlinkFeeds.json"));
   return getUSDPrices({ tokens, feedList, multiCall: abiMultiCall });
 }
 

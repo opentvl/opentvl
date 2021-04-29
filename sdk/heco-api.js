@@ -1,9 +1,9 @@
+const { readFileSync } = require("fs");
+const path = require("path");
 const Eth = require("web3-eth");
 const Etherscan = require("./lib/etherscan");
 const Bottleneck = require("bottleneck");
 const HRC20 = require("./abis/erc20.json");
-const feedList = require("./data/hecoChainlinkFeeds.json");
-const tokenList = require("./data/hecoTokenLists.json");
 const { getBalance, getBalances, getLogs, singleCall, multiCall } = require("./lib/web3");
 const debug = require("debug")("opentvl:heco-api");
 const { applyDecimals } = require("./lib/big-number");
@@ -114,7 +114,7 @@ async function utilGetLogs({ target, topic, topics, keys, fromBlock, toBlock }) 
 async function utilTokenList() {
   debug("heco.util.tokenList");
 
-  return tokenList;
+  return readFileSync(path.resolve(__dirname, "../.database/hecoTokenLists.json"));
 }
 
 async function utilToSymbols(addressesBalances) {
@@ -283,10 +283,12 @@ async function swapGetPairAddresses(factoryAddress, fromBlock, toBlock) {
 }
 
 function chainlinkGetSupportedTokens() {
+  const feedList = readFileSync(path.resolve(__dirname, "../.database/hecoChainlinkFeeds.json"));
   return getSupportedTokens({ feedList });
 }
 
 async function chainlinkGetUSDPrices(tokens) {
+  const feedList = readFileSync(path.resolve(__dirname, "../.database/hecoChainlinkFeeds.json"));
   return getUSDPrices({ tokens, feedList, multiCall: abiMultiCall });
 }
 
