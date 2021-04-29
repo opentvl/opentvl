@@ -7,7 +7,7 @@ const HRC20 = require("./abis/erc20.json");
 const { getBalance, getBalances, getLogs, singleCall, multiCall } = require("./lib/web3");
 const debug = require("debug")("opentvl:heco-api");
 const { applyDecimals } = require("./lib/big-number");
-const { getSupportedTokens, getUSDPrices } = require("./lib/chainlink");
+const { getSupportedTokens, getUSDPrice } = require("./lib/chainlink");
 const { getReservedBalances, getPairAddresses } = require("./lib/swap");
 
 if (!process.env.HECO_RPC_URL) {
@@ -72,7 +72,7 @@ async function abiCall({ target, abi, block, params }) {
   if (typeof abi === "string") {
     abi = mapStringToABI(abi);
   }
-  debug("heco.abi.call", { target, abi, block, params });
+  debug("heco.abi.call", { target, abi: abi.name, block, params });
 
   return singleCall({ web3: HECO_WEB3, limiter: HECO_LIMITER, target, abi, block, params });
 }
@@ -81,7 +81,7 @@ async function abiMultiCall({ target, abi, block, calls }) {
   if (typeof abi === "string") {
     abi = mapStringToABI(abi);
   }
-  debug("heco.abi.multiCall", { target, abi, block, calls });
+  debug("heco.abi.multiCall", { target, abi: abi.name, block, calls });
 
   return multiCall({
     web3: HECO_WEB3,
@@ -114,7 +114,7 @@ async function utilGetLogs({ target, topic, topics, keys, fromBlock, toBlock }) 
 async function utilTokenList() {
   debug("heco.util.tokenList");
 
-  return readFileSync(path.resolve(__dirname, "../.database/hecoTokenLists.json"));
+  return JSON.parse(readFileSync(path.resolve(__dirname, "../.database/hecoTokenLists.json")));
 }
 
 async function utilToSymbols(addressesBalances) {
@@ -266,6 +266,8 @@ async function hrc20BalanceOf({ target, owner, block, decimals }) {
 }
 
 async function swapGetReservedBalances(pairAddresses) {
+  debug("heco.swap.getReservedBalances", pairAddresses);
+
   return getReservedBalances({
     pairAddresses,
     tokenList: await utilTokenList(),
@@ -274,6 +276,8 @@ async function swapGetReservedBalances(pairAddresses) {
 }
 
 async function swapGetPairAddresses(factoryAddress, fromBlock, toBlock) {
+  debug("heco.swap.getPairAddresses", factoryAddress, fromBlock, toBlock);
+
   return getPairAddresses({
     factoryAddress,
     fromBlock,
@@ -283,13 +287,19 @@ async function swapGetPairAddresses(factoryAddress, fromBlock, toBlock) {
 }
 
 function chainlinkGetSupportedTokens() {
-  const feedList = readFileSync(path.resolve(__dirname, "../.database/hecoChainlinkFeeds.json"));
+  debug("heco.chainlink.getSupportedTokens");
+
+  const feedList = JSON.parse(readFileSync(path.resolve(__dirname, "../.database/hecoChainlinkFeeds.json")));
+
   return getSupportedTokens({ feedList });
 }
 
-async function chainlinkGetUSDPrices(tokens) {
-  const feedList = readFileSync(path.resolve(__dirname, "../.database/hecoChainlinkFeeds.json"));
-  return getUSDPrices({ tokens, feedList, multiCall: abiMultiCall });
+async function chainlinkGetUSDPrice(symbol) {
+  debug("heco.chainlink.getUSDPrice", symbol);
+
+  const feedList = JSON.parse(readFileSync(path.resolve(__dirname, "../.database/hecoChainlinkFeeds.json")));
+
+  return getUSDPrice({ symbol, feedList, multiCall: abiMultiCall });
 }
 
 module.exports = {
@@ -319,6 +329,6 @@ module.exports = {
   },
   chainlink: {
     getSupportedTokens: chainlinkGetSupportedTokens,
-    getUSDPrices: chainlinkGetUSDPrices
+    getUSDPrice: chainlinkGetUSDPrice
   }
 };

@@ -67,6 +67,10 @@ async function tvl(_, block) {
       calls: [{ params: [AAVE_CREATOR] }, { params: [AAVE] }]
     })
   )
+  console.log(
+    'sdk.eth.chainlink.getUSDPrice',
+    await sdk.eth.chainlink.getUSDPrice('ETH')
+  )
 
   /* test bsc apis */
   console.log('sdk.bsc.bep20.info', (await sdk.bsc.bep20.info(CAKE)).output)
@@ -119,6 +123,10 @@ async function tvl(_, block) {
       abi: 'bep20:balanceOf',
       calls: [{ params: [CAKE_CREATOR] }, { params: [CAKE] }]
     })
+  )
+  console.log(
+    'sdk.bsc.chainlink.getUSDPrice',
+    await sdk.bsc.chainlink.getUSDPrice('BNB')
   )
 
   /* test heco apis */
@@ -178,6 +186,10 @@ async function tvl(_, block) {
       abi: 'hrc20:balanceOf',
       calls: [{ params: [MDEX_CREATOR] }, { params: [MDEX] }]
     })
+  )
+  console.log(
+    'sdk.heco.chainlink.getUSDPrice',
+    await sdk.heco.chainlink.getUSDPrice('HT')
   )
 
   return {}

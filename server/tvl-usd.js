@@ -1,11 +1,6 @@
 const BigNumber = require("bignumber.js");
-const Bottleneck = require("bottleneck");
 const sdk = require("../sdk");
-const fetch = require("node-fetch");
-const limiter = new Bottleneck({ maxConcurrent: 1, minTime: 600 });
-const debug = require("debug")("opentvl:tvl-usd");
-
-const COIN_GECKO_IDS = require("./coinGeckoIDs.json");
+const debug = require("debug")("opentvl:server:tvl-usd");
 
 function normalizeSymbol(symbol) {
   const mapping = {
@@ -16,114 +11,162 @@ function normalizeSymbol(symbol) {
     "UNI-V2": "UNI"
   };
 
-  const formatted = symbol.toUpperCase();
-  return mapping[formatted] ?? formatted;
+  return mapping[symbol] || symbol;
 }
 
-function partitionTokens(tokenCounts) {
-  const ethTokens = sdk.eth.chainlink.getSupportedTokens();
-  const bscTokens = sdk.bsc.chainlink.getSupportedTokens();
-  const hecoTokens = sdk.heco.chainlink.getSupportedTokens();
+const CHAINS = [
+  {
+    key: "eth",
+    nativeTokenDecimals: 18,
+    nativeTokenSymbol: "ETH",
+    tokenList: sdk.eth.util.tokenList,
+    getSymbol: sdk.eth.erc20.symbol,
+    getDecimals: sdk.eth.erc20.decimals,
+    getUSDPrice: sdk.eth.chainlink.getUSDPrice
+  },
+  {
+    key: "bsc",
+    nativeTokenDecimals: 18,
+    nativeTokenSymbol: "BNB",
+    tokenList: sdk.bsc.util.tokenList,
+    getSymbol: sdk.bsc.bep20.symbol,
+    getDecimals: sdk.bsc.bep20.decimals,
+    getUSDPrice: sdk.bsc.chainlink.getUSDPrice
+  },
+  {
+    key: "heco",
+    nativeTokenDecimals: 18,
+    nativeTokenSymbol: "HT",
+    tokenList: sdk.heco.util.tokenList,
+    getSymbol: sdk.heco.hrc20.symbol,
+    getDecimals: sdk.heco.hrc20.decimals,
+    getUSDPrice: sdk.heco.chainlink.getUSDPrice
+  }
+];
 
-  return Object.entries(tokenCounts).reduce(
-    (acc, [symbol, count]) => {
-      // The tokens in tokenCounts are derived from the tokenSet
-      // That token may be known by a different name in the feeds mapping
-      // Thus we need to call a normalize function to convert the token to the
-      // feeds naming system before we interact with the feeds
-      const normalized = normalizeSymbol(symbol);
-      const entry = { symbol: normalized, count };
-      if (ethTokens.includes(normalized)) {
-        acc.ethTokens.push(entry);
-      } else if (bscTokens.includes(normalized)) {
-        acc.bscTokens.push(entry);
-      } else if (hecoTokens.includes(normalized)) {
-        acc.hecoTokens.push(entry);
-      } else {
-        acc.coinGeckoTokens.push(entry);
+const NATIVE_TOKEN_ADDRESS = "0x0000000000000000000000000000000000000000";
+
+function getTvlFromTokenList(topTokens, address, amt) {
+  const addr = address.toLowerCase();
+
+  const token = topTokens.find(t => t.contract.toLowerCase() === addr);
+
+  if (token) {
+    return {
+      source: "tokenlist",
+      symbol: token.symbol,
+      price: token.price,
+      decimals: token.decimals,
+      usd: new BigNumber(token.price).multipliedBy(sdk.util.applyDecimals(amt, token.decimals))
+    };
+  }
+
+  return null;
+}
+
+async function getTvlFromChainlink(chain, address, amt) {
+  try {
+    const symbol = (await chain.getSymbol(address)).output;
+    const price = await chain.getUSDPrice(normalizeSymbol(symbol));
+
+    if (!price) {
+      return null;
+    }
+
+    const decimals = (await chain.getDecimals(address)).output;
+
+    return {
+      source: "chainlink",
+      symbol,
+      price,
+      decimals,
+      usd: new BigNumber(price).multipliedBy(sdk.util.applyDecimals(amt, decimals))
+    };
+  } catch (err) {
+    console.log(`error get tvl from chainlink`, err);
+
+    return null;
+  }
+}
+
+async function getTvlForOneAddress(chain, address, amt) {
+  if (address === NATIVE_TOKEN_ADDRESS) {
+    const nativeTokenPrice = await chain.getUSDPrice(chain.nativeTokenSymbol);
+    return {
+      source: "nativetoken",
+      symbol: chain.nativeTokenSymbol,
+      price: nativeTokenPrice,
+      decimals: chain.nativeTokenDecimals,
+      usd: new BigNumber(nativeTokenPrice).multipliedBy(sdk.util.applyDecimals(amt, chain.nativeTokenDecimals))
+    };
+  }
+
+  const topTokens = await chain.tokenList();
+  const tvlFromTokenList = getTvlFromTokenList(topTokens, address, amt);
+
+  if (tvlFromTokenList) {
+    return tvlFromTokenList;
+  }
+
+  const tvlFromChainlink = await getTvlFromChainlink(chain, address, amt);
+
+  if (tvlFromChainlink) {
+    return tvlFromChainlink;
+  }
+
+  return null;
+}
+
+async function computeTVLUSD(locked) {
+  let total = BigNumber(0);
+  const byChainByContract = {};
+
+  for (let chain of CHAINS) {
+    if (locked[chain.key]) {
+      const lockedTokens = locked[chain.key];
+
+      byChainByContract[chain.key] = {};
+
+      let tvl = BigNumber(0);
+
+      for (let address in lockedTokens) {
+        const amt = lockedTokens[address];
+
+        const one = await getTvlForOneAddress(chain, address, amt);
+
+        if (one) {
+          byChainByContract[chain.key][address] = {
+            address,
+            amt,
+            source: one.source,
+            symbol: one.symbol,
+            decimals: one.decimals,
+            price: one.price,
+            usd: one.usd.toNumber()
+          };
+
+          tvl = tvl.plus(one.usd);
+        } else {
+          byChainByContract[chain.key][address] = {
+            address,
+            amt,
+            source: null,
+            symbol: null,
+            price: null,
+            usd: null
+          };
+        }
       }
 
-      return acc;
-    },
-    { ethTokens: [], bscTokens: [], hecoTokens: [], coinGeckoTokens: [] }
-  );
-}
+      debug(`${chain.key} tvl is ${tvl.toNumber()}`);
 
-async function fetchGroupPrices(group) {
-  const groupWithIDs = group.reduce((acc, { symbol, count }) => {
-    const token = COIN_GECKO_IDS.find(({ symbol: other }) => symbol.toUpperCase() === other.toUpperCase());
-
-    if (token?.id) {
-      acc.push({ id: token.id, symbol, count });
-    } else {
-      debug(`unable to find coingecko id for ${symbol}`);
+      total = total.plus(tvl);
     }
-    return acc;
-  }, []);
+  }
 
-  const ids = groupWithIDs.map(({ id }) => id).join(",");
+  debug(`tvl USD summary`, byChainByContract);
 
-  const priceRes = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`);
-  const priceJSON = await priceRes.json();
-
-  return groupWithIDs.map(({ id, symbol, count }) => {
-    if (!priceJSON[id]?.usd) {
-      debug("missing price information for", id, symbol);
-
-      return { symbol, tvl: new BigNumber(0), price: new BigNumber(0), count };
-    }
-
-    const price = new BigNumber(priceJSON[id].usd);
-    const tvl = price.multipliedBy(new BigNumber(count));
-
-    return { symbol, tvl, price, count };
-  });
-}
-
-const rateLimitedFetchGroupPrices = limiter.wrap(fetchGroupPrices);
-
-async function fetchCoinGeckoPrices(coinGeckoTokens) {
-  const numGroups = Math.ceil(coinGeckoTokens.length / 250);
-  const tokenGroups = coinGeckoTokens.reduce(
-    (acc, token, i) => {
-      // Put ids in alternating slots to create equal size groups
-      const index = i % numGroups;
-      acc[index].push(token);
-      return acc;
-    },
-    [...Array(numGroups)].map(() => [])
-  );
-
-  const prices = (await Promise.all(tokenGroups.map(async group => await rateLimitedFetchGroupPrices(group)))).flat();
-
-  return prices;
-}
-
-// We want to iterate over all of the tokens in our tokenCounts,
-// find their corresponding proxy addresses, make the call to chainlink to get
-// the price, and then multiply the price by the token counts and sum all the
-// products together to get tvl in USD
-async function computeTVLUSD(tokens) {
-  const tokenCounts = sdk.util.sum(
-    [
-      tokens.eth && (await sdk.eth.util.toSymbols(tokens.eth)).output,
-      tokens.bsc && (await sdk.bsc.util.toSymbols(tokens.bsc)).output,
-      tokens.heco && (await sdk.heco.util.toSymbols(tokens.heco)).output
-    ].filter(Boolean)
-  );
-
-  const { ethTokens, bscTokens, hecoTokens, coinGeckoTokens } = partitionTokens(tokenCounts);
-
-  const ethTokenPrices = await sdk.eth.chainlink.getUSDPrices(ethTokens);
-  const bscTokenPrices = await sdk.bsc.chainlink.getUSDPrices(bscTokens);
-  const hecoTokenPrices = await sdk.heco.chainlink.getUSDPrices(hecoTokens);
-  const coinGeckoPrices = await fetchCoinGeckoPrices(coinGeckoTokens);
-
-  const prices = [...ethTokenPrices, ...bscTokenPrices, ...hecoTokenPrices, ...coinGeckoPrices];
-
-  const tvl = prices.reduce((sum, { tvl }) => sum.plus(tvl), BigNumber(0));
-
-  return tvl.toNumber();
+  return total.toNumber();
 }
 
 module.exports = computeTVLUSD;

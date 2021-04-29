@@ -8,7 +8,7 @@ const ERC20 = require("./abis/erc20.json");
 const { getBalance, getBalances, getLogs, singleCall, multiCall } = require("./lib/web3");
 const debug = require("debug")("opentvl:eth-api");
 const { applyDecimals } = require("./lib/big-number");
-const { getSupportedTokens, getUSDPrices } = require("./lib/chainlink");
+const { getSupportedTokens, getUSDPrice } = require("./lib/chainlink");
 const { getReservedBalances, getPairAddresses } = require("./lib/swap");
 
 if (!process.env.ETH_RPC_URL) {
@@ -73,7 +73,7 @@ async function abiCall({ target, abi, block, params }) {
   if (typeof abi === "string") {
     abi = mapStringToABI(abi);
   }
-  debug("eth.abi.call", { target, abi, block, params });
+  debug("eth.abi.call", { target, abi: abi.name, block, params });
 
   return singleCall({ web3: ETH_WEB3, limiter: ETH_LIMITER, target, abi, block, params });
 }
@@ -82,7 +82,7 @@ async function abiMultiCall({ target, abi, block, calls }) {
   if (typeof abi === "string") {
     abi = mapStringToABI(abi);
   }
-  debug("eth.abi.multiCall", { target, abi, block, calls });
+  debug("eth.abi.multiCall", { target, abi: abi.name, block, calls });
 
   return multiCall({
     web3: ETH_WEB3,
@@ -115,7 +115,7 @@ async function utilGetLogs({ target, topic, topics, keys, fromBlock, toBlock }) 
 async function utilTokenList() {
   debug("eth.util.tokenList");
 
-  return readFileSync(path.resolve(__dirname, "../.database/ethTokenLists.json"));
+  return JSON.parse(readFileSync(path.resolve(__dirname, "../.database/ethTokenLists.json")));
 }
 
 async function utilKyberTokens() {
@@ -283,6 +283,8 @@ async function erc20BalanceOf({ target, owner, block, decimals }) {
 }
 
 async function swapGetReservedBalances(pairAddresses) {
+  debug("eth.swap.getReservedBalances", pairAddresses);
+
   return getReservedBalances({
     pairAddresses,
     tokenList: await utilTokenList(),
@@ -291,6 +293,8 @@ async function swapGetReservedBalances(pairAddresses) {
 }
 
 async function swapGetPairAddresses(factoryAddress, fromBlock, toBlock) {
+  debug("eth.swap.getPairAddresses", factoryAddress, fromBlock, toBlock);
+
   return getPairAddresses({
     factoryAddress,
     fromBlock,
@@ -300,13 +304,19 @@ async function swapGetPairAddresses(factoryAddress, fromBlock, toBlock) {
 }
 
 function chainlinkGetSupportedTokens() {
-  const feedList = readFileSync(path.resolve(__dirname, "../.database/ethChainlinkFeeds.json"));
+  debug("eth.chainlink.getSupportedTokens");
+
+  const feedList = JSON.parse(readFileSync(path.resolve(__dirname, "../.database/ethChainlinkFeeds.json")));
+
   return getSupportedTokens({ feedList });
 }
 
-async function chainlinkGetUSDPrices(tokens) {
-  const feedList = readFileSync(path.resolve(__dirname, "../.database/ethChainlinkFeeds.json"));
-  return getUSDPrices({ tokens, feedList, multiCall: abiMultiCall });
+async function chainlinkGetUSDPrice(symbol) {
+  debug("eth.chainlink.getUSDPrice", symbol);
+
+  const feedList = JSON.parse(readFileSync(path.resolve(__dirname, "../.database/ethChainlinkFeeds.json")));
+
+  return getUSDPrice({ symbol, feedList, multiCall: abiMultiCall });
 }
 
 module.exports = {
@@ -348,6 +358,6 @@ module.exports = {
   },
   chainlink: {
     getSupportedTokens: chainlinkGetSupportedTokens,
-    getUSDPrices: chainlinkGetUSDPrices
+    getUSDPrice: chainlinkGetUSDPrice
   }
 };

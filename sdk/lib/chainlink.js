@@ -1,61 +1,51 @@
-const LATEST_ROUND_DATA_ABI = require("../abis/latestRoundData.json");
-const BigNumber = require("bignumber.js");
 const { applyDecimals } = require("./big-number");
+const PRICE_ABIS = require("../abis/price.json");
+
+const LATEST_ROUND_DATA_ABI = PRICE_ABIS.find(i => i.name === "latestRoundData");
+const DECIMALS_ABI = PRICE_ABIS.find(i => i.name === "decimals");
 
 function getSupportedTokens({ feedList }) {
   return Object.keys(feedList);
 }
 
 async function getPrices({ symbols, feedList, multiCall }) {
-  const prices = (
+  const answersRes = (
     await multiCall({
       abi: LATEST_ROUND_DATA_ABI,
-      calls: symbols.map((symbol) => ({ target: feedList[symbol].contract })),
+      calls: symbols.map(symbol => ({ target: feedList[symbol].contract }))
     })
   ).output;
 
-  return prices.reduce((acc, res, idx) => {
-    if (res.success) {
+  const decimalsRes = (
+    await multiCall({
+      abi: DECIMALS_ABI,
+      calls: symbols.map(symbol => ({ target: feedList[symbol].contract }))
+    })
+  ).output;
+
+  return answersRes.reduce((acc, a, idx) => {
+    const d = decimalsRes[idx];
+    if (a.success && d.success) {
       const symbol = symbols[idx];
-      const { decimals } = feedList[symbol];
-      acc[symbol] = applyDecimals(res.output.answer, decimals);
+      const decimals = d.output;
+      acc[symbol] = applyDecimals(a.output.answer, decimals);
     }
 
     return acc;
   }, {});
 }
 
-async function getUSDPrices({ tokens, feedList, multiCall }) {
-  // Ensure that we have intermediary token prices, i.e CAKE -> BNB -> USD
-  const tokenSymbols = tokens.reduce((acc, { symbol }) => {
-    const { target } = feedList[symbol];
+async function getUSDPrice({ symbol, feedList, multiCall }) {
+  if (feedList[symbol]) {
+    const prices = await getPrices({ symbols: [symbol], feedList, multiCall });
 
-    acc.add(symbol);
+    return prices[symbol];
+  }
 
-    if (target !== "USD") {
-      acc.add(target);
-    }
-
-    return acc;
-  }, new Set());
-
-  const prices = await getPrices({ symbols: [...tokenSymbols], feedList, multiCall });
-
-  return tokens.map(({ symbol, count }) => {
-    let currentToken = symbol;
-    let currentValue = BigNumber(count);
-
-    while (currentToken !== "USD") {
-      const { target: targetToken } = feedList[currentToken];
-      currentValue = currentValue.times(prices[currentToken]);
-      currentToken = targetToken;
-    }
-
-    return { symbol, tvl: currentValue, price: currentValue.div(count), count };
-  });
+  return null;
 }
 
 module.exports = {
   getSupportedTokens,
-  getUSDPrices,
+  getUSDPrice
 };

@@ -59,18 +59,22 @@ async function tvl(timestamp, block) {
       let joins = await getJoins(block);
 
       for (let join in joins) {
-        let gem = (await sdk.api.abi.call({
-          block, 
-          target: joins[join],
-          abi: MakerMCDConstants.gem
-        })).output;
-        console.log(gem, join)
-        let balance = (await sdk.api.erc20.balanceOf({
-          target: gem,
-          owner: joins[join],
-          block
-        })).output;
-        balances[gem] = balances[gem] ? balances[gem].plus(balance) : new BigNumber(balance);
+        try {
+          let gem = (await sdk.api.abi.call({
+            block, 
+            target: joins[join],
+            abi: MakerMCDConstants.gem
+          })).output;
+          console.log(gem, join)
+          let balance = (await sdk.api.erc20.balanceOf({
+            target: gem,
+            owner: joins[join],
+            block
+          })).output;
+          balances[gem] = balances[gem] ? balances[gem].plus(balance) : new BigNumber(balance);
+        } catch (err) {
+          console.log("handle join failed", join, err);
+        }
       }
   
       let pie = (await sdk.api.abi.call({

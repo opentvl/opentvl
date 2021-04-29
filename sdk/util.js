@@ -5,6 +5,8 @@
 const _ = require("underscore");
 const BigNumber = require("bignumber.js");
 
+const { applyDecimals } = require("./lib/big-number");
+
 /*==================================================
   Helper Methods
   ==================================================*/
@@ -12,7 +14,7 @@ const BigNumber = require("bignumber.js");
 function Sum(balanceArray) {
   let balances = {};
 
-  _.each(balanceArray, (balanceEntries) => {
+  _.each(balanceArray, balanceEntries => {
     _.each(balanceEntries, (balance, address) => {
       balances[address] = BigNumber(balances[address] || 0)
         .plus(balance)
@@ -24,7 +26,7 @@ function Sum(balanceArray) {
 }
 
 function SumMultiBalanceOf(balances, results) {
-  _.each(results.output, (result) => {
+  _.each(results.output, result => {
     if (result.success) {
       let address = result.input.target;
       let balance = result.output;
@@ -47,4 +49,5 @@ function SumMultiBalanceOf(balances, results) {
 module.exports = {
   sum: Sum,
   sumMultiBalanceOf: SumMultiBalanceOf,
+  applyDecimals
 };
