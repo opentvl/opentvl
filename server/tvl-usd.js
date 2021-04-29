@@ -64,9 +64,8 @@ function getTvlFromTokenList(topTokens, address, amt) {
   return null;
 }
 
-async function getTvlFromChainlink(chain, address, amt) {
+async function getTvlFromChainlink(chain, symbol, address, amt) {
   try {
-    const symbol = (await chain.getSymbol(address)).output;
     const price = await chain.getUSDPrice(normalizeSymbol(symbol));
 
     if (!price) {
@@ -92,6 +91,7 @@ async function getTvlFromChainlink(chain, address, amt) {
 async function getTvlForOneAddress(chain, address, amt) {
   if (address === NATIVE_TOKEN_ADDRESS) {
     const nativeTokenPrice = await chain.getUSDPrice(chain.nativeTokenSymbol);
+
     return {
       source: "nativetoken",
       symbol: chain.nativeTokenSymbol,
@@ -102,19 +102,37 @@ async function getTvlForOneAddress(chain, address, amt) {
   }
 
   const topTokens = await chain.tokenList();
+
   const tvlFromTokenList = getTvlFromTokenList(topTokens, address, amt);
 
   if (tvlFromTokenList) {
     return tvlFromTokenList;
   }
 
-  const tvlFromChainlink = await getTvlFromChainlink(chain, address, amt);
+  const allTokenSymbols = topTokens.map(t => t.symbol);
 
-  if (tvlFromChainlink) {
-    return tvlFromChainlink;
+  try {
+    const symbol = (await chain.getSymbol(address)).output;
+
+    // ignore long tail tokens
+    if (allTokenSymbols.includes(symbol)) {
+      debug(`ignored a not well known token ${symbol} at address ${address}`);
+
+      return null;
+    }
+
+    const tvlFromChainlink = await getTvlFromChainlink(chain, symbol, address, amt);
+
+    if (tvlFromChainlink) {
+      return tvlFromChainlink;
+    }
+
+    return null;
+  } catch (getSymbolErr) {
+    debug(`get symbol err for address ${address}`, getSymbolErr);
+
+    return null;
   }
-
-  return null;
 }
 
 async function computeTVLUSD(locked) {
