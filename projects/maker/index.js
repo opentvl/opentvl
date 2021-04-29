@@ -73,7 +73,7 @@ async function tvl(timestamp, block) {
           })).output;
           balances[gem] = balances[gem] ? balances[gem].plus(balance) : new BigNumber(balance);
         } catch (err) {
-          console.log("handle join failed", join, err);
+          console.log("handle join failed", join, joins[join], err);
         }
       }
   

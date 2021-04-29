@@ -136,24 +136,22 @@ async function computeTVLUSD(locked) {
 
         if (one) {
           byChainByContract[chain.key][address] = {
-            address,
-            amt,
             source: one.source,
             symbol: one.symbol,
             decimals: one.decimals,
             price: one.price,
-            usd: one.usd.toNumber()
+            amount: amt,
+            usdAmount: one.usd.toNumber()
           };
 
           tvl = tvl.plus(one.usd);
         } else {
           byChainByContract[chain.key][address] = {
-            address,
-            amt,
             source: null,
             symbol: null,
             price: null,
-            usd: null
+            amount: amt,
+            usdAmount: null
           };
         }
       }
@@ -164,7 +162,7 @@ async function computeTVLUSD(locked) {
     }
   }
 
-  debug(`tvl USD summary`, byChainByContract);
+  debug(`tvl USD summary`, JSON.stringify(byChainByContract, null, 2));
 
   return total.toNumber();
 }

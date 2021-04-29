@@ -80,7 +80,7 @@ async function fetchTVL(project) {
     output = { eth: output };
   }
 
-  debug("found tvl in symbols", output);
+  debug("found tvl in symbols", JSON.stringify(output, null, 2));
 
   return output;
 }
