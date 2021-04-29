@@ -47,6 +47,14 @@ function extractAddress(link) {
   return link.slice(link.indexOf("/token/") + 7);
 }
 
+function extractAmount(amt) {
+  return parseFloat(amt.slice(1, amt.length).replace(/,/g, ""));
+}
+
+function extractNumber(num) {
+  return parseInt(num.replace(/,/g, ""), 10);
+}
+
 async function fetchPage(scanUrl, page) {
   const html = await (await fetch(`${scanUrl}/tokens?ps=100&p=${page}`)).text();
 
@@ -65,9 +73,25 @@ async function fetchPage(scanUrl, page) {
     const symbol = extractSymbol(title.innerHTML);
     const contract = extractAddress(title.getAttribute("href"));
 
+    const priceCol = row.querySelector("td:nth-child(3)");
+    const price = extractAmount(priceCol.innerHTML.slice(0, priceCol.innerHTML.indexOf("<")));
+
+    const volume24HCol = row.querySelector("td:nth-child(5)");
+    const volume24H = extractAmount(volume24HCol.innerHTML);
+
+    const marketCapCol = row.querySelector("td:nth-child(6)");
+    const marketCap = extractAmount(marketCapCol.innerHTML.slice(0, marketCapCol.innerHTML.indexOf("&")));
+
+    const holdersCol = row.querySelector("td:nth-child(7)");
+    const holders = extractNumber(holdersCol.innerHTML);
+
     acc.push({
       symbol,
       contract,
+      price,
+      marketCap,
+      holders,
+      volume24H,
       rank: (page - 1) * 100 + idx + 1
     });
 
