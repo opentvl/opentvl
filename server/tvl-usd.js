@@ -1,6 +1,6 @@
 const BigNumber = require("bignumber.js");
 const Bottleneck = require("bottleneck");
-const sdk = require("./sdk");
+const sdk = require("../sdk");
 const fetch = require("node-fetch");
 const limiter = new Bottleneck({ maxConcurrent: 1, minTime: 600 });
 const debug = require("debug")("opentvl:tvl-usd");

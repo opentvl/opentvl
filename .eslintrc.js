@@ -1,16 +1,16 @@
 module.exports = {
-  root: true,
   env: {
     node: true,
-    es2020: true,
+    commonjs: true,
+    es2021: true,
+    jest: true
   },
-  extends: ["eslint:recommended", "prettier"],
-  overrides: [
-    {
-      files: ["test/*.js", "test/**/*.js"],
-      env: {
-        jest: true,
-      },
-    },
-  ],
+  globals: {
+    artifacts: "readonly"
+  },
+  extends: "eslint:recommended",
+  parserOptions: {
+    ecmaVersion: 12
+  },
+  rules: {}
 };

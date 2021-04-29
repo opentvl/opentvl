@@ -1,10 +1,10 @@
+const { readFileSync } = require("fs");
+const path = require("path");
 const fetch = require("node-fetch");
 const Eth = require("web3-eth");
 const Etherscan = require("./lib/etherscan");
 const Bottleneck = require("bottleneck");
 const ERC20 = require("./abis/erc20.json");
-const feedList = require("./data/ethChainlinkFeeds.json");
-const tokenList = require("./data/ethTokenLists.json");
 const { getBalance, getBalances, getLogs, singleCall, multiCall } = require("./lib/web3");
 const debug = require("debug")("opentvl:eth-api");
 const { applyDecimals } = require("./lib/big-number");
@@ -115,7 +115,7 @@ async function utilGetLogs({ target, topic, topics, keys, fromBlock, toBlock }) 
 async function utilTokenList() {
   debug("eth.util.tokenList");
 
-  return tokenList;
+  return readFileSync(path.resolve(__dirname, "../.database/ethTokenLists.json"));
 }
 
 async function utilKyberTokens() {
@@ -300,10 +300,12 @@ async function swapGetPairAddresses(factoryAddress, fromBlock, toBlock) {
 }
 
 function chainlinkGetSupportedTokens() {
+  const feedList = readFileSync(path.resolve(__dirname, "../.database/ethChainlinkFeeds.json"));
   return getSupportedTokens({ feedList });
 }
 
 async function chainlinkGetUSDPrices(tokens) {
+  const feedList = readFileSync(path.resolve(__dirname, "../.database/ethChainlinkFeeds.json"));
   return getUSDPrices({ tokens, feedList, multiCall: abiMultiCall });
 }
 

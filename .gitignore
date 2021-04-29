@@ -9,3 +9,4 @@ csv
 serverless.yml
 .serverless
 tokenPrices.json
+.database
