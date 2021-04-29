@@ -8,8 +8,7 @@
     "start": "node server.js",
     "lint": "eslint sdk server test",
     "test": "jest --forceExit test/handler.spec.js",
-    "test:bsc": "jest --forceExit bscapi",
-    "deploy": "serverless deploy"
+    "test:bsc": "jest --forceExit bscapi"
   },
   "dependencies": {
     "argparse": "^2.0.1",
@@ -20,6 +19,8 @@
     "debug": "^4.3.1",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
+    "ethers": "5.0.8",
+    "form-data": "^4.0.0",
     "graph-results-pager": "^1.0.2",
     "graphql": "^15.4.0",
     "graphql-request": "^3.4.0",
