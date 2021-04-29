@@ -57,7 +57,7 @@ async function fetchPage(scanUrl, page) {
 
   const tableRows = table.querySelectorAll("tbody tr");
 
-  const tokens = tableRows.reduce((acc, row) => {
+  const tokens = tableRows.reduce((acc, row, idx) => {
     const title = row.querySelector(".text-primary");
 
     const symbol = extractSymbol(title.innerHTML);
@@ -65,7 +65,8 @@ async function fetchPage(scanUrl, page) {
 
     acc.push({
       symbol,
-      contract
+      contract,
+      rank: (page - 1) * 100 + idx + 1
     });
 
     return acc;
@@ -85,7 +86,7 @@ async function updateTokenLists() {
     const existingTokens = require(chain.file);
 
     existingTokens.forEach(token => {
-      const hasToken = allTokens.some(t => t.contract === token.contract);
+      const hasToken = allTokens.some(t => t.contract.toLowerCase() === token.contract.toLowerCase());
 
       if (!hasToken) {
         allTokens.push(token);
