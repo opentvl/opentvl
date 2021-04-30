@@ -1,3 +1,4 @@
+const fetch = require("node-fetch");
 const BigNumber = require("bignumber.js");
 const sdk = require("../sdk");
 const debug = require("debug")("opentvl:server:tvl-usd");
@@ -17,6 +18,7 @@ function normalizeSymbol(symbol) {
 const CHAINS = [
   {
     key: "eth",
+    coingeckoKey: "ethereum",
     nativeTokenDecimals: 18,
     nativeTokenSymbol: "ETH",
     tokenList: sdk.eth.util.tokenList,
@@ -26,6 +28,7 @@ const CHAINS = [
   },
   {
     key: "bsc",
+    coingeckoKey: "binance-smart-chain",
     nativeTokenDecimals: 18,
     nativeTokenSymbol: "BNB",
     tokenList: sdk.bsc.util.tokenList,
@@ -35,6 +38,7 @@ const CHAINS = [
   },
   {
     key: "heco",
+    coingeckoKey: "huobi-token",
     nativeTokenDecimals: 18,
     nativeTokenSymbol: "HT",
     tokenList: sdk.heco.util.tokenList,
@@ -88,6 +92,31 @@ async function getTvlFromChainlink(chain, symbol, address, amt) {
   }
 }
 
+async function getTvlFromCoingecko(chain, symbol, address, amt) {
+  const priceRes = await fetch(
+    `https://api.coingecko.com/api/v3/simple/token_price/${
+      chain.coingeckoKey
+    }?contract_addresses=${address.toLowerCase()}&vs_currencies=usd`
+  );
+
+  const priceData = await priceRes.json();
+  const price = priceData[address.toLowerCase()]?.usd;
+
+  if (!price) {
+    return null;
+  }
+
+  const decimals = (await chain.getDecimals(address)).output;
+
+  return {
+    source: "coingecko",
+    symbol,
+    price,
+    decimals,
+    usd: new BigNumber(price).multipliedBy(sdk.util.applyDecimals(amt, decimals))
+  };
+}
+
 async function getTvlForOneAddress(chain, address, amt) {
   if (address === NATIVE_TOKEN_ADDRESS) {
     const nativeTokenPrice = await chain.getUSDPrice(chain.nativeTokenSymbol);
@@ -125,6 +154,12 @@ async function getTvlForOneAddress(chain, address, amt) {
 
     if (tvlFromChainlink) {
       return tvlFromChainlink;
+    }
+
+    const tvlFromCoingecko = await getTvlFromCoingecko(chain, symbol, address, amt);
+
+    if (tvlFromCoingecko) {
+      return tvlFromCoingecko;
     }
 
     return null;
