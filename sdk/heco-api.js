@@ -270,7 +270,6 @@ async function swapGetReservedBalances(pairAddresses) {
 
   return getReservedBalances({
     pairAddresses,
-    tokenList: await utilTokenList(),
     multiCall: abiMultiCall
   });
 }

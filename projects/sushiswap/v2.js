@@ -18,14 +18,6 @@ const FACTORY = '0xc0aee478e3658e2610c5f7a4a2e1777ce9e4f2ac';
   TVL
   ==================================================*/
 module.exports = async function tvl(_, block) {
-  const supportedTokens = await (
-    sdk
-      .api
-      .util
-      .tokenList()
-      .then((supportedTokens) => supportedTokens.map(({ contract }) => contract))
-  );
-
   const logs = (
     await sdk.api.util
       .getLogs({
@@ -77,11 +69,9 @@ module.exports = async function tvl(_, block) {
     if (token0Address.success) {
       const tokenAddress = token0Address.output.toLowerCase();
 
-      if (supportedTokens.includes(tokenAddress)) {
-        const pairAddress = token0Address.input.target.toLowerCase();
-        pairs[pairAddress] = {
-          token0Address: tokenAddress,
-        }
+      const pairAddress = token0Address.input.target.toLowerCase();
+      pairs[pairAddress] = {
+        token0Address: tokenAddress,
       }
     }
   });
@@ -90,12 +80,10 @@ module.exports = async function tvl(_, block) {
   token1Addresses.forEach((token1Address) => {
     if (token1Address.success) {
       const tokenAddress = token1Address.output.toLowerCase();
-      if (supportedTokens.includes(tokenAddress)) {
-        const pairAddress = token1Address.input.target.toLowerCase();
-        pairs[pairAddress] = {
-          ...(pairs[pairAddress] || {}),
-          token1Address: tokenAddress,
-        }
+      const pairAddress = token1Address.input.target.toLowerCase();
+      pairs[pairAddress] = {
+        ...(pairs[pairAddress] || {}),
+        token1Address: tokenAddress,
       }
     }
   });

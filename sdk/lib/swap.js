@@ -25,9 +25,7 @@ async function getPairAddresses({ factoryAddress, fromBlock, toBlock, getLogs })
   return pairAddresses;
 }
 
-async function getReservedBalances({ pairAddresses, tokenList, multiCall }) {
-  const supportedTokens = tokenList.map(({ contract }) => contract);
-
+async function getReservedBalances({ pairAddresses, multiCall }) {
   const [token0Addresses, token1Addresses] = await Promise.all([
     multiCall({
       abi: TOKEN0_ABI,
@@ -48,13 +46,10 @@ async function getReservedBalances({ pairAddresses, tokenList, multiCall }) {
   token0Addresses.forEach(token0Address => {
     if (token0Address.success) {
       const tokenAddress = token0Address.output.toLowerCase();
-
-      if (supportedTokens.includes(tokenAddress)) {
-        const pairAddress = token0Address.input.target.toLowerCase();
-        pairs[pairAddress] = {
-          token0Address: tokenAddress
-        };
-      }
+      const pairAddress = token0Address.input.target.toLowerCase();
+      pairs[pairAddress] = {
+        token0Address: tokenAddress
+      };
     }
   });
 
@@ -62,13 +57,11 @@ async function getReservedBalances({ pairAddresses, tokenList, multiCall }) {
   token1Addresses.forEach(token1Address => {
     if (token1Address.success) {
       const tokenAddress = token1Address.output.toLowerCase();
-      if (supportedTokens.includes(tokenAddress)) {
-        const pairAddress = token1Address.input.target.toLowerCase();
-        pairs[pairAddress] = {
-          ...(pairs[pairAddress] || {}),
-          token1Address: tokenAddress
-        };
-      }
+      const pairAddress = token1Address.input.target.toLowerCase();
+      pairs[pairAddress] = {
+        ...(pairs[pairAddress] || {}),
+        token1Address: tokenAddress
+      };
     }
   });
 

@@ -8,6 +8,7 @@ _.flatMap = _.compose(_.flatten, _.map);
 
 const abi = require("./abi.json");
 const { object } = require("underscore");
+const { default: BigNumber } = require("bignumber.js");
 
 /*==================================================
   Constants
@@ -153,9 +154,7 @@ async function tvl(timestamp, block) {
 
   delete balances['0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490'];
   delete balances['0x075b1bb99792c9E1041bA13afEf80C91a1e70fB3'];
-  delete balances['0xdF5e0e81Dff6FAF3A7e52BA697820c5e32D806A8']
-
-  let { output } = await sdk.api.util.toSymbols(balances);
+  delete balances['0xdF5e0e81Dff6FAF3A7e52BA697820c5e32D806A8'];
 
   const yTokens = [
     {
@@ -206,36 +205,23 @@ async function tvl(timestamp, block) {
   ];
 
   // Count y tokens as their underlying asset, ie ycDAI = cDAI
-  output.map((_token) => {
-    const yToken = yTokens.filter((token) => token.symbol === _token.symbol)[0];
+  const output = Object.entries(balances).reduce((acc, [address, count]) => {
+    const yToken = yTokens.filter(({ contract }) => address === contract)[0];
+
     // is y token
     if (yToken) {
-      let _data = output.find((t) => t.symbol === yToken.underlying);
-
-      if (!_data) {
-        _data = {
-          symbol: yToken.underlying,
-          address: yToken.contract,
-          balance: 0,
-        };
-
-        output.push(_data);
-      }
-      // Update balance
-      _data.balance = String(
-        parseFloat(_data.balance) + parseFloat(_token.balance)
-      );
+      const existingBalance = new BigNumber(balances[yToken.contract] || '0');
+      const additionalBalance = new BigNumber(count);
+      acc[yToken.contract] = existingBalance.plus(additionalBalance).toFixed();
+    } else {
+      acc[address] = count;
     }
-  });
 
-  output = output.filter(
-    (_token) => !yTokens.find((token) => token.symbol === _token.symbol)
-  );
-  for (let out of output) {
-    if (out.symbol === "ETH") {
-      out.address = etherAddress;
-    }
-  }
+    return acc;
+  }, {});
+
+  output[etherAddress] = output[curveEtherAddress];
+  delete output[curveEtherAddress];
 
   return output;
 }

@@ -7,6 +7,7 @@ const Bottleneck = require("bottleneck");
 const debug = require("debug")("opentvl:server:tvl-usd");
 
 const COINGECKO_LIMITER = new Bottleneck({ maxConcurrent: 2, minTime: 400 });
+const WETH = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
 
 function normalizeSymbol(symbol) {
   const mapping = {
@@ -75,6 +76,17 @@ function getTvlFromTokenList(topTokens, address, amt) {
 
 async function getTvlFromChainlink(chain, symbol, address, amt) {
   try {
+    let symbol = (await chain.tokenList())
+      .find(({ contract }) => contract === address)?.symbol;
+    
+    if (address === WETH) {
+      symbol = "ETH"
+    }
+    
+    if (!symbol) {
+      return null;
+    }
+
     const price = await chain.getUSDPrice(normalizeSymbol(symbol));
 
     if (!price) {
@@ -91,7 +103,7 @@ async function getTvlFromChainlink(chain, symbol, address, amt) {
       usd: new BigNumber(price).multipliedBy(sdk.util.applyDecimals(amt, decimals))
     };
   } catch (err) {
-    console.log(`error get tvl from chainlink`, err);
+    console.log(`error get tvl from chainlink: address: ${address}, amt: ${amt}, chain: ${chain.key}`, err);
 
     return null;
   }
@@ -239,6 +251,17 @@ async function computeTVLUSD(locked) {
   }
 
   debug(`tvl USD summary`, JSON.stringify(byChainByContract, null, 2));
+  debug(`large amounts`, JSON.stringify(
+    Object.entries(byChainByContract.eth).reduce((acc, [address, info]) => {
+      if (info.usdAmount > 100000000) {
+        acc[address] = info;
+      }
+
+      return acc;
+    }, {}),
+    null,
+    2
+  ));
 
   return { USD: total.toNumber(), SUMMARY: byChainByContract };
 }
