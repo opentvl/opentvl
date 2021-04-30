@@ -1,7 +1,12 @@
+const fs = require("fs");
+const path = require("path");
 const fetch = require("node-fetch");
 const BigNumber = require("bignumber.js");
 const sdk = require("../sdk");
+const Bottleneck = require("bottleneck");
 const debug = require("debug")("opentvl:server:tvl-usd");
+
+const COINGECKO_LIMITER = new Bottleneck({ maxConcurrent: 2, minTime: 400 });
 
 function normalizeSymbol(symbol) {
   const mapping = {
@@ -92,12 +97,30 @@ async function getTvlFromChainlink(chain, symbol, address, amt) {
   }
 }
 
-async function getTvlFromCoingecko(chain, symbol, address, amt) {
-  const priceRes = await fetch(
-    `https://api.coingecko.com/api/v3/simple/token_price/${
-      chain.coingeckoKey
-    }?contract_addresses=${address.toLowerCase()}&vs_currencies=usd`
+async function fetchPriceFromCoingecko(platform, address) {
+  return fetch(
+    `https://api.coingecko.com/api/v3/simple/token_price/${platform}?contract_addresses=${address}&vs_currencies=usd`
   );
+}
+
+const rateLimitedFetchPriceFromCoingecko = COINGECKO_LIMITER.wrap(fetchPriceFromCoingecko);
+
+async function getTvlFromCoingecko(chain, symbol, address, amt) {
+  const coinGeckoProjects = JSON.parse(fs.readFileSync(path.join(__dirname, "..", ".database", "coinGeckoIDs.json")));
+
+  const project = coinGeckoProjects.find(p => {
+    if (!p.platforms[chain.coingeckoKey]) {
+      return false;
+    }
+
+    return p.platforms[chain.coingeckoKey] === address.toLowerCase();
+  });
+
+  if (!project) {
+    return null;
+  }
+
+  const priceRes = await rateLimitedFetchPriceFromCoingecko(chain.coingeckoKey, address.toLowerCase());
 
   const priceData = await priceRes.json();
   const price = priceData[address.toLowerCase()]?.usd;
@@ -217,7 +240,7 @@ async function computeTVLUSD(locked) {
 
   debug(`tvl USD summary`, JSON.stringify(byChainByContract, null, 2));
 
-  return total.toNumber();
+  return { USD: total.toNumber(), SUMMARY: byChainByContract };
 }
 
 module.exports = computeTVLUSD;
