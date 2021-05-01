@@ -7,6 +7,7 @@ const vaultAbi = require("./vaultAbi");
 const lpAbi = require("./lpAbi");
 const _ = require("underscore");
 const BigNumber = require("bignumber.js");
+const assert = require("assert").strict;
 
 /*==================================================
   Settings
@@ -34,7 +35,8 @@ let vaultAddresses = [
   "0xB6eB654FBDc697edD73174a19B074BC67c00a0C0", // CAKE Vault
   "0x2b66399AD01be47C5aa11C48fDd6DF689DAE929A", // ACSI Vault
 ];
-let swapVaultAddresses = [
+// pancake v1 swap vault
+let swapVaultV1Addresses = [
   "0xb00B62da1cd28AB88983960487F2902c64c00bc5", // sACS-SXP Vault
   "0x03f52C3612df0dB3c86a4776a20caece8A194f38", // sVAI-BNB Vault
   "0x1DA371DC8127b0cdED8D13fF20F062Bb9e02C1a3", // sSXP-BNB Vault
@@ -73,6 +75,46 @@ let swapVaultAddresses = [
   "0xED51b5c077B71d5B475E30C88B72632fa679fCE3", // COMP-ETH Vault
   "0x3679d4C2752bEef8632fd12c45b005ecB2774EF0", // SUSHI-ETH Vault
   "0xe9d9f54Ab89F712ABBdbb3C0F63f2D6eDAa3869c", // BETH-ETH Vault
+];
+// pancake v2 swap vault
+let swapVaultV2Addresses = [
+  "0xe9861F3624B5F7012991ba2762CD1eAD4c622FF5", // CAKE-BNB Vault
+  "0x1Db2f258E7f403C1f4b1BC47F686aa3E161DC655", // XVS-BNB Vault
+  "0x32d5B8867B44762d78e80fFcBF6E956E6A35F3a0", // SXP-BNB Vault
+  "0x9Ce0E88c803672CE672b9b9e66c664B81499cE04", // BUSD-BNB Vault
+  "0x54D01f573017A4e61452cb13432e3a59a79C36bf", // USDT-BNB Vault
+  "0x08234f020496ccceEB144f9637A566b936b0EE6F", // ETH-BNB Vault
+  "0x1231082D043393f8990861521A10BDc911fEDbBe", // BTC-BNB Vault
+  "0xC3eF174A704aB413cA81A5eB3f7eB08B535e91C4", // pBTC-BNB Vault
+  "0xbe627707f079e32A54d323BE0c61Da02a28bD0bd", // BTC-BUSD Vault
+  "0x5e1D648CF00E31b08ede095170B6764B60D06056", // LTC-BNB Vault
+  "0xdFE0E5992dE7Ca8277A40C37ACCDE36dCb9c94C6", // YFI-BNB Vault
+  "0x3DCd4c706EA3c36a1173503ad5C40217Bfbc935E", // ADA-BNB Vault
+  "0xeE9Ccd9d5c8b07Bb9E6bF1Ab17748C737eC35EA0", // UNI-BNB Vault
+  "0xB2c1B30689B8A3fD0916B3a3C6135D0226DeCA7c", // DOT-BNB Vault
+  "0x67D288C7599F866880e7486F9E29dedA4749bBB8", // XRP-BNB Vault
+  "0xB18Cf14cCD6a32C87783c2010D52aB39fA98A081", // LINK-BNB Vault
+  "0x2883D6d514D2474B942769B981702526897D74D4", // BAND-BNB Vault
+  "0x3d4bECF8C867d0Ca5C40b5c9449b96C481425334", // ZIL-BNB Vault
+  "0x22E61e0E445f3a5d2675Cbb20f8c03FA3C55BD95", // TWT-BNB Vault
+  "0xE47C98A41Ea2f48C17d6B58420CbCeD5E69F5987", // UNFI-BNB Vault
+  "0xB8C134eFAfda61a906B657A19b37B3d733362C98", // BTCST-BNB Vault
+  "0x14cb72a422bE17372108A2b5f7A2837297948745", // SFP-BNB Vault
+  "0x79980898fB7fCC8950335b173Cc5872A96328b5d", // TKO-BNB Vault
+  "0x7d34CD09953E4f30Cb21494A1ee74eb3F03d996a", // TLM-BNB Vault
+  "0x5A330d3F99Ac2Ef00ac5167707D88E9D3D59620c", // ALICE-BNB Vault
+  "0x8692858d9DAE5C9E48515531E8d62d2c44E4C453", // FRONT-BNB Vault
+  "0x8383661eCF333FCe4Bf51d498D7c94e2a0c7d5AF", // WATCH-BNB Vault
+  "0xC34E0597e50A173E3bE8682512aff80D0DFd49f9", // SWINGBY-BNB Vault
+  "0xcDb35CF4DeD79c991eabcbB03fEcBA6D9af0Bf6e", // ALPHA-BNB Vault
+  "0x4c6f2643001669842778D8B6C1878E3EbC1Ea377", // REEF-BNB Vault
+  "0x46E65055Be06AF470384BcFe140b4ec8a160d15f", // CTK-BNB Vault
+  "0x38e3e6973Ba60daADB3bA8B4DF76Ef3a5A8962b0", // USDT-BUSD Vault
+  "0xAd4BBa0Da4889830fa8C9c7B1b04Ab4faa791F6f", // FOR-BUSD Vault
+  "0xCbA040A994824572c6827d81A6f5715E163C0F64", // TPT-BUSD Vault
+  "0xA7fE1ac962E451312208e09A7c894EBa44833E86", // MIR-UST Vault
+  "0x627E6506F26f7ae6250667f4F5A494E0e6443ED5", // COMP-ETH Vault
+  "0xCFb96FFbE95C0B7129b57eC4D229F8b9eae2d280", // SUSHI-ETH Vault
 ];
 
 /*==================================================
@@ -128,6 +170,8 @@ async function tvlInSwapVault(timestamp, block) {
   let vaultInfos = {};
   const lpToVault = {};
 
+  const swapVaultAddresses = swapVaultV1Addresses.concat(swapVaultV2Addresses);
+
   // Get vaults' underlying liquidity pairs' addresses
   const underlyingVaultAddressResults = await sdk.bsc.abi.multiCall({
     calls: _.map(swapVaultAddresses, (address) => ({
@@ -139,6 +183,7 @@ async function tvlInSwapVault(timestamp, block) {
   vaultInfos = underlyingVaultAddressResults.output.reduce((acc, t) => {
     if (t.success) {
       acc[t.input.target] = { lpAddress: t.output };
+      assert.ok(lpToVault[t.output] === undefined);
       lpToVault[t.output] = t.input.target;
     }
     return acc;
