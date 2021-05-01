@@ -8,6 +8,7 @@ const { existsSync } = require("fs");
 const debug = require("debug")("opentvl:server");
 const { savePriceFeeds } = require("./chainlink");
 const { saveTokenLists } = require("./token-list");
+const { saveCoingeckoProjects } = require("./coingecko");
 const computeTVLUSD = require("./tvl-usd");
 
 const app = express();
@@ -35,6 +36,7 @@ async function refreshDatabase() {
 
   await savePriceFeeds(DATABASE_PATH);
   await saveTokenLists(DATABASE_PATH);
+  await saveCoingeckoProjects(DATABASE_PATH);
 }
 
 async function hasProject(project) {
@@ -130,10 +132,10 @@ app.get("/projects/:project/tvl_by_usd", async (req, res) => {
 
     const tvlUSD = await computeTVLUSD(output);
 
-    debug("final result", tvlUSD);
+    debug("final result", tvlUSD.USD);
     debug(`total processing time ${Date.now() - startedAt}ms`);
 
-    res.json({ USD: tvlUSD });
+    res.json(tvlUSD);
   } catch (err) {
     console.log("project processing error:", err);
 

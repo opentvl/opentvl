@@ -1,6 +1,13 @@
+const fs = require("fs");
+const path = require("path");
+const fetch = require("node-fetch");
+const { parse } = require("node-html-parser");
 const BigNumber = require("bignumber.js");
 const sdk = require("../sdk");
+const Bottleneck = require("bottleneck");
 const debug = require("debug")("opentvl:server:tvl-usd");
+
+const COINGECKO_LIMITER = new Bottleneck({ maxConcurrent: 2, minTime: 400 });
 
 function normalizeSymbol(symbol) {
   const mapping = {
@@ -17,6 +24,8 @@ function normalizeSymbol(symbol) {
 const CHAINS = [
   {
     key: "eth",
+    scanUrl: "https://etherscan.io",
+    coingeckoKey: "ethereum",
     nativeTokenDecimals: 18,
     nativeTokenSymbol: "ETH",
     tokenList: sdk.eth.util.tokenList,
@@ -26,6 +35,8 @@ const CHAINS = [
   },
   {
     key: "bsc",
+    scanUrl: "https://bscscan.com",
+    coingeckoKey: "binance-smart-chain",
     nativeTokenDecimals: 18,
     nativeTokenSymbol: "BNB",
     tokenList: sdk.bsc.util.tokenList,
@@ -35,6 +46,8 @@ const CHAINS = [
   },
   {
     key: "heco",
+    scanUrl: "https://hecoinfo.com",
+    coingeckoKey: "huobi-token",
     nativeTokenDecimals: 18,
     nativeTokenSymbol: "HT",
     tokenList: sdk.heco.util.tokenList,
@@ -46,14 +59,14 @@ const CHAINS = [
 
 const NATIVE_TOKEN_ADDRESS = "0x0000000000000000000000000000000000000000";
 
-function getTvlFromTokenList(topTokens, address, amt) {
+function getTvlFromTokenList(chain, topTokens, address, amt) {
   const addr = address.toLowerCase();
 
   const token = topTokens.find((t) => t.contract.toLowerCase() === addr);
 
   if (token) {
     return {
-      source: "tokenlist",
+      source: `${chain.scanUrl}/tokens`,
       symbol: token.symbol,
       price: token.price,
       decimals: token.decimals,
@@ -62,6 +75,52 @@ function getTvlFromTokenList(topTokens, address, amt) {
   }
 
   return null;
+}
+
+function extractAmount(amt) {
+  return parseFloat(amt.slice(1, amt.length).replace(/,/g, ""));
+}
+
+async function getTvlFromScan(chain, address, amt) {
+  const addr = address.toLowerCase();
+  const url = `${chain.scanUrl}/token/${addr}`;
+
+  const pageRes = await fetch(url);
+
+  if (!pageRes.ok) {
+    return null;
+  }
+
+  const html = await pageRes.text();
+
+  const root = parse(html);
+
+  const priceContainer = root.querySelector("#ContentPlaceHolder1_tr_valuepertoken");
+  if (!priceContainer) {
+    return null;
+  }
+
+  const priceCol = priceContainer.querySelector(".d-block");
+  const price = extractAmount(priceCol.innerHTML.slice(0, priceCol.innerHTML.indexOf("<")).trim());
+
+  const decimalsContainer = root.querySelector("#ContentPlaceHolder1_trDecimals");
+  if (!decimalsContainer) {
+    return null;
+  }
+
+  const decimalsCol = decimalsContainer.querySelector(".col-md-8");
+  const decimals = decimalsCol.innerHTML.trim();
+
+  const symbolField = root.querySelector("#ContentPlaceHolder1_hdnSymbol");
+  const symbol = symbolField ? symbolField.getAttribute("value").trim() : "UNKOWN";
+
+  return {
+    source: url,
+    symbol,
+    price,
+    decimals,
+    usd: new BigNumber(price).multipliedBy(sdk.util.applyDecimals(amt, decimals)),
+  };
 }
 
 async function getTvlFromChainlink(chain, symbol, address, amt) {
@@ -88,6 +147,53 @@ async function getTvlFromChainlink(chain, symbol, address, amt) {
   }
 }
 
+async function fetchPriceFromCoingecko(platform, address) {
+  return fetch(
+    `https://api.coingecko.com/api/v3/simple/token_price/${platform}?contract_addresses=${address}&vs_currencies=usd`
+  );
+}
+
+const rateLimitedFetchPriceFromCoingecko = COINGECKO_LIMITER.wrap(fetchPriceFromCoingecko);
+
+async function getTvlFromCoingecko(chain, symbol, address, amt) {
+  const coinGeckoProjects = JSON.parse(fs.readFileSync(path.join(__dirname, "..", ".database", "coinGeckoIDs.json")));
+
+  const project = coinGeckoProjects.find((p) => {
+    if (!p.platforms[chain.coingeckoKey]) {
+      return false;
+    }
+
+    return p.platforms[chain.coingeckoKey] === address.toLowerCase();
+  });
+
+  if (!project) {
+    return null;
+  }
+
+  const priceRes = await rateLimitedFetchPriceFromCoingecko(chain.coingeckoKey, address.toLowerCase());
+
+  if (!priceRes.ok) {
+    return null;
+  }
+
+  const priceData = await priceRes.json();
+  const price = priceData[address.toLowerCase()]?.usd;
+
+  if (!price) {
+    return null;
+  }
+
+  const decimals = (await chain.getDecimals(address)).output;
+
+  return {
+    source: "coingecko",
+    symbol,
+    price,
+    decimals,
+    usd: new BigNumber(price).multipliedBy(sdk.util.applyDecimals(amt, decimals)),
+  };
+}
+
 async function getTvlForOneAddress(chain, address, amt) {
   if (address === NATIVE_TOKEN_ADDRESS) {
     const nativeTokenPrice = await chain.getUSDPrice(chain.nativeTokenSymbol);
@@ -103,10 +209,16 @@ async function getTvlForOneAddress(chain, address, amt) {
 
   const topTokens = await chain.tokenList();
 
-  const tvlFromTokenList = getTvlFromTokenList(topTokens, address, amt);
+  const tvlFromTokenList = getTvlFromTokenList(chain, topTokens, address, amt);
 
   if (tvlFromTokenList) {
     return tvlFromTokenList;
+  }
+
+  const tvlFromScan = getTvlFromScan(chain, address, amt);
+
+  if (tvlFromScan) {
+    return tvlFromScan;
   }
 
   const allTokenSymbols = topTokens.map((t) => t.symbol);
@@ -125,6 +237,12 @@ async function getTvlForOneAddress(chain, address, amt) {
 
     if (tvlFromChainlink) {
       return tvlFromChainlink;
+    }
+
+    const tvlFromCoingecko = await getTvlFromCoingecko(chain, symbol, address, amt);
+
+    if (tvlFromCoingecko) {
+      return tvlFromCoingecko;
     }
 
     return null;
@@ -183,7 +301,7 @@ async function computeTVLUSD(locked) {
 
   debug(`tvl USD summary`, JSON.stringify(byChainByContract, null, 2));
 
-  return total.toNumber();
+  return { USD: total.toNumber(), SUMMARY: byChainByContract };
 }
 
 module.exports = computeTVLUSD;
