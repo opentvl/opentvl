@@ -8,7 +8,7 @@ function normalizeSymbol(symbol) {
     WETH: "ETH",
     WBTC: "BTC",
     HDOT: "DOT",
-    "UNI-V2": "UNI"
+    "UNI-V2": "UNI",
   };
 
   return mapping[symbol] || symbol;
@@ -22,7 +22,7 @@ const CHAINS = [
     tokenList: sdk.eth.util.tokenList,
     getSymbol: sdk.eth.erc20.symbol,
     getDecimals: sdk.eth.erc20.decimals,
-    getUSDPrice: sdk.eth.chainlink.getUSDPrice
+    getUSDPrice: sdk.eth.chainlink.getUSDPrice,
   },
   {
     key: "bsc",
@@ -31,7 +31,7 @@ const CHAINS = [
     tokenList: sdk.bsc.util.tokenList,
     getSymbol: sdk.bsc.bep20.symbol,
     getDecimals: sdk.bsc.bep20.decimals,
-    getUSDPrice: sdk.bsc.chainlink.getUSDPrice
+    getUSDPrice: sdk.bsc.chainlink.getUSDPrice,
   },
   {
     key: "heco",
@@ -40,8 +40,8 @@ const CHAINS = [
     tokenList: sdk.heco.util.tokenList,
     getSymbol: sdk.heco.hrc20.symbol,
     getDecimals: sdk.heco.hrc20.decimals,
-    getUSDPrice: sdk.heco.chainlink.getUSDPrice
-  }
+    getUSDPrice: sdk.heco.chainlink.getUSDPrice,
+  },
 ];
 
 const NATIVE_TOKEN_ADDRESS = "0x0000000000000000000000000000000000000000";
@@ -49,7 +49,7 @@ const NATIVE_TOKEN_ADDRESS = "0x0000000000000000000000000000000000000000";
 function getTvlFromTokenList(topTokens, address, amt) {
   const addr = address.toLowerCase();
 
-  const token = topTokens.find(t => t.contract.toLowerCase() === addr);
+  const token = topTokens.find((t) => t.contract.toLowerCase() === addr);
 
   if (token) {
     return {
@@ -57,7 +57,7 @@ function getTvlFromTokenList(topTokens, address, amt) {
       symbol: token.symbol,
       price: token.price,
       decimals: token.decimals,
-      usd: new BigNumber(token.price).multipliedBy(sdk.util.applyDecimals(amt, token.decimals))
+      usd: new BigNumber(token.price).multipliedBy(sdk.util.applyDecimals(amt, token.decimals)),
     };
   }
 
@@ -79,7 +79,7 @@ async function getTvlFromChainlink(chain, symbol, address, amt) {
       symbol,
       price,
       decimals,
-      usd: new BigNumber(price).multipliedBy(sdk.util.applyDecimals(amt, decimals))
+      usd: new BigNumber(price).multipliedBy(sdk.util.applyDecimals(amt, decimals)),
     };
   } catch (err) {
     console.log(`error get tvl from chainlink`, err);
@@ -97,7 +97,7 @@ async function getTvlForOneAddress(chain, address, amt) {
       symbol: chain.nativeTokenSymbol,
       price: nativeTokenPrice,
       decimals: chain.nativeTokenDecimals,
-      usd: new BigNumber(nativeTokenPrice).multipliedBy(sdk.util.applyDecimals(amt, chain.nativeTokenDecimals))
+      usd: new BigNumber(nativeTokenPrice).multipliedBy(sdk.util.applyDecimals(amt, chain.nativeTokenDecimals)),
     };
   }
 
@@ -109,7 +109,7 @@ async function getTvlForOneAddress(chain, address, amt) {
     return tvlFromTokenList;
   }
 
-  const allTokenSymbols = topTokens.map(t => t.symbol);
+  const allTokenSymbols = topTokens.map((t) => t.symbol);
 
   try {
     const symbol = (await chain.getSymbol(address)).output;
@@ -159,7 +159,7 @@ async function computeTVLUSD(locked) {
             decimals: one.decimals,
             price: one.price,
             amount: amt,
-            usdAmount: one.usd.toNumber()
+            usdAmount: one.usd.toNumber(),
           };
 
           tvl = tvl.plus(one.usd);
@@ -169,8 +169,9 @@ async function computeTVLUSD(locked) {
             symbol: null,
             price: null,
             amount: amt,
-            usdAmount: null
+            usdAmount: null,
           };
+          debug(`Cannot find price for token ${address} in chain ${chain.key}`);
         }
       }
 
