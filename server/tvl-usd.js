@@ -8,6 +8,7 @@ const Bottleneck = require("bottleneck");
 const debug = require("debug")("opentvl:server:tvl-usd");
 
 const COINGECKO_LIMITER = new Bottleneck({ maxConcurrent: 2, minTime: 400 });
+const SCAN_LIMITER = new Bottleneck({ maxConcurrent: 1, minTime: 2000 });
 
 function normalizeSymbol(symbol) {
   const mapping = {
@@ -81,11 +82,13 @@ function extractAmount(amt) {
   return parseFloat(amt.slice(1, amt.length).replace(/,/g, ""));
 }
 
+const rateLimitedScanFetch = SCAN_LIMITER.wrap(fetch);
+
 async function getTvlFromScan(chain, address, amt) {
   const addr = address.toLowerCase();
   const url = `${chain.scanUrl}/token/${addr}`;
 
-  const pageRes = await fetch(url);
+  const pageRes = await rateLimitedScanFetch(url);
 
   if (!pageRes.ok) {
     return null;
@@ -97,6 +100,8 @@ async function getTvlFromScan(chain, address, amt) {
 
   const priceContainer = root.querySelector("#ContentPlaceHolder1_tr_valuepertoken");
   if (!priceContainer) {
+    debug(`cannot find price container from scan html`, url);
+    fs.writeFileSync(`/tmp/${chain.key}-${address}`, html);
     return null;
   }
 
@@ -105,6 +110,7 @@ async function getTvlFromScan(chain, address, amt) {
 
   const decimalsContainer = root.querySelector("#ContentPlaceHolder1_trDecimals");
   if (!decimalsContainer) {
+    debug(`cannot find decimals container from scan html`, url);
     return null;
   }
 
@@ -147,13 +153,7 @@ async function getTvlFromChainlink(chain, symbol, address, amt) {
   }
 }
 
-async function fetchPriceFromCoingecko(platform, address) {
-  return fetch(
-    `https://api.coingecko.com/api/v3/simple/token_price/${platform}?contract_addresses=${address}&vs_currencies=usd`
-  );
-}
-
-const rateLimitedFetchPriceFromCoingecko = COINGECKO_LIMITER.wrap(fetchPriceFromCoingecko);
+const rateLimitedCoingeckoFetch = COINGECKO_LIMITER.wrap(fetch);
 
 async function getTvlFromCoingecko(chain, symbol, address, amt) {
   const coinGeckoProjects = JSON.parse(fs.readFileSync(path.join(__dirname, "..", ".database", "coinGeckoIDs.json")));
@@ -170,7 +170,11 @@ async function getTvlFromCoingecko(chain, symbol, address, amt) {
     return null;
   }
 
-  const priceRes = await rateLimitedFetchPriceFromCoingecko(chain.coingeckoKey, address.toLowerCase());
+  const priceRes = await rateLimitedCoingeckoFetch(
+    `https://api.coingecko.com/api/v3/simple/token_price/${
+      chain.coingeckoKey
+    }?contract_addresses=${address.toLowerCase()}&vs_currencies=usd`
+  );
 
   if (!priceRes.ok) {
     return null;
@@ -195,6 +199,8 @@ async function getTvlFromCoingecko(chain, symbol, address, amt) {
 }
 
 async function getTvlForOneAddress(chain, address, amt) {
+  debug(`getTvlForOneAddress ${chain.key} ${address} ${amt}`);
+
   if (address === NATIVE_TOKEN_ADDRESS) {
     const nativeTokenPrice = await chain.getUSDPrice(chain.nativeTokenSymbol);
 
