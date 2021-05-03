@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "nodemon --exec 'cross-env DEBUG=opentvl:server* node server/index.js' -e 'js yml json'",
     "dev:verbose": "nodemon --exec 'cross-env DEBUG=opentvl:* node server/index.js' -e 'js yml json'",
-    "start": "node server.js",
+    "start": "node server/index.js",
     "lint": "eslint sdk server test",
     "test": "jest --forceExit test/handler.spec.js",
     "test:bsc": "jest --forceExit bscapi"
